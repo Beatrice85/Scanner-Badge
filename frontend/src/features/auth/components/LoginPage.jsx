@@ -45,14 +45,17 @@ export default function LoginPage() {
             </div>
           </div>
 
-          {erreurSession && !error && <div className="error-message">{erreurSession}</div>}
+          {erreurSession && !error && <div role="alert" className="error-message">{erreurSession}</div>}
 
           <form className="login-form" onSubmit={handleSubmit}>
             <div className="form-group">
-              <label>Adresse Email</label>
+              <label htmlFor="login-email">Adresse Email</label>
               <div className="input-icon">
-                <span>📧</span>
+                <span aria-hidden="true">📧</span>
                 <input
+                  id="login-email"
+                  name="email"
+                  autoComplete="email"
                   type="email"
                   placeholder="vous@example.com"
                   value={email}
@@ -61,10 +64,13 @@ export default function LoginPage() {
               </div>
             </div>
             <div className="form-group">
-              <label>Mot de passe</label>
+              <label htmlFor="login-password">Mot de passe</label>
               <div className="input-icon">
-                <span>🔒</span>
+                <span aria-hidden="true">🔒</span>
                 <input
+                  id="login-password"
+                  name="password"
+                  autoComplete="current-password"
                   type="password"
                   placeholder="••••••••"
                   value={password}
@@ -77,7 +83,7 @@ export default function LoginPage() {
                 <input type="checkbox" /> Se souvenir de moi
               </label>
             </div>
-            {error && <div className="error-message">{error}</div>}
+            {error && <div role="alert" className="error-message">{error}</div>}
             <button type="submit" className="bg-blue-600 text-white btn-full" disabled={envoi}>
               {envoi ? 'Connexion...' : 'Se connecter'}
             </button>

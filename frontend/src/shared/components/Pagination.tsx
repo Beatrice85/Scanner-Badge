@@ -1,86 +1,129 @@
+import { useId } from 'react';
+import { TAILLES_PAGE } from '../hooks/usePagination';
+
 interface PaginationProps {
-  currentPage: number;
+  page: number;
   totalPages: number;
+  total: number;
+  premier: number;
+  dernier: number;
+  taille: number;
   onPageChange: (page: number) => void;
+  onTailleChange: (taille: number) => void;
+  // Nom des éléments au pluriel, pour les libellés (« 1–10 sur 57 chantiers »)
+  libelle?: string;
+  tailles?: readonly number[];
 }
 
-export default function Pagination({ currentPage, totalPages, onPageChange }: PaginationProps) {
-  if (totalPages <= 1) {
+// Pages à afficher : toutes si ≤ 7, sinon 1 … autour de la page courante … dernière.
+function pagesAffichees(page: number, totalPages: number): Array<number | 'ellipsis'> {
+  if (totalPages <= 7) {
+    return Array.from({ length: totalPages }, (_, index) => index + 1);
+  }
+  const pages: Array<number | 'ellipsis'> = [1];
+  if (page > 3) pages.push('ellipsis');
+  for (let index = Math.max(2, page - 1); index <= Math.min(totalPages - 1, page + 1); index += 1) {
+    pages.push(index);
+  }
+  if (page < totalPages - 2) pages.push('ellipsis');
+  pages.push(totalPages);
+  return pages;
+}
+
+const classeBouton =
+  'inline-flex h-9 min-w-9 items-center justify-center rounded-lg border px-3 text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-50';
+
+// Pagination accessible : sélecteur de lignes par page (libellé relié), position annoncée
+// (aria-live), navigation <nav> avec page courante en aria-current et libellés explicites.
+export default function Pagination({
+  page,
+  totalPages,
+  total,
+  premier,
+  dernier,
+  taille,
+  onPageChange,
+  onTailleChange,
+  libelle = 'éléments',
+  tailles = TAILLES_PAGE,
+}: PaginationProps) {
+  const idSelect = useId();
+
+  if (total === 0) {
     return null;
   }
 
-  const safeCurrentPage = Math.min(Math.max(1, currentPage), totalPages);
-  const pages: Array<number | 'ellipsis'> = [];
-
-  if (totalPages <= 7) {
-    for (let index = 1; index <= totalPages; index += 1) {
-      pages.push(index);
-    }
-  } else {
-    pages.push(1);
-
-    if (safeCurrentPage > 3) {
-      pages.push('ellipsis');
-    }
-
-    const start = Math.max(2, safeCurrentPage - 1);
-    const end = Math.min(totalPages - 1, safeCurrentPage + 1);
-
-    for (let index = start; index <= end; index += 1) {
-      pages.push(index);
-    }
-
-    if (safeCurrentPage < totalPages - 2) {
-      pages.push('ellipsis');
-    }
-
-    pages.push(totalPages);
-  }
-
   return (
-    <div className="mt-4 flex flex-wrap items-center justify-end gap-2">
-      <button
-        type="button"
-        onClick={() => onPageChange(Math.max(1, safeCurrentPage - 1))}
-        disabled={safeCurrentPage === 1}
-        className="rounded-full border border-white/10 px-3 py-2 text-sm text-slate-300 transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-50"
-      >
-        Précédent
-      </button>
-
-      {pages.map((page, index) => {
-        if (page === 'ellipsis') {
-          return (
-            <span key={`ellipsis-${index}`} className="px-2 text-sm text-slate-400">
-              ...
-            </span>
-          );
-        }
-
-        const isActive = page === safeCurrentPage;
-
-        return (
-          <button
-            key={page}
-            type="button"
-            onClick={() => onPageChange(page)}
-            className={`rounded-full px-3 py-2 text-sm transition ${
-              isActive ? 'bg-emerald-500 text-white' : 'border border-white/10 text-slate-300 hover:bg-white/10'
-            }`}
+    <div className="mt-4 flex flex-col gap-3 border-t border-slate-200 pt-4 text-sm text-slate-600 md:flex-row md:items-center md:justify-between">
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+        <div className="flex items-center gap-2">
+          <label htmlFor={idSelect} className="font-medium text-slate-700">Lignes par page</label>
+          <select
+            id={idSelect}
+            value={taille}
+            onChange={(event) => onTailleChange(Number(event.target.value))}
+            className="h-9 rounded-lg border border-slate-300 bg-white px-2 text-sm text-slate-800 hover:border-blue-400"
           >
-            {page}
-          </button>
-        );
-      })}
+            {tailles.map((t) => (
+              <option key={t} value={t}>{t}</option>
+            ))}
+          </select>
+        </div>
+        <p aria-live="polite">
+          <span className="font-semibold text-slate-900">{premier}–{dernier}</span> sur{' '}
+          <span className="font-semibold text-slate-900">{total}</span> {libelle}
+        </p>
+      </div>
 
-      <button
-        type="button"
-        onClick={() => onPageChange(Math.min(totalPages, safeCurrentPage + 1))}
-        disabled={safeCurrentPage === totalPages}
-        className="rounded-full border border-white/10 px-3 py-2 text-sm text-slate-300 transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-50"
-      >
-        Suivant
-      </button>
+      {totalPages > 1 && (
+        <nav aria-label={`Pagination des ${libelle}`}>
+          <ul className="flex flex-wrap items-center gap-1.5">
+            <li>
+              <button
+                type="button"
+                onClick={() => onPageChange(page - 1)}
+                disabled={page === 1}
+                className={`${classeBouton} border-slate-300 bg-white text-slate-700 hover:bg-slate-100`}
+              >
+                <span aria-hidden="true">‹</span>&nbsp;Précédent
+              </button>
+            </li>
+
+            {pagesAffichees(page, totalPages).map((p, index) =>
+              p === 'ellipsis' ? (
+                <li key={`ellipsis-${index}`} aria-hidden="true" className="px-1 text-slate-500">…</li>
+              ) : (
+                <li key={p}>
+                  <button
+                    type="button"
+                    onClick={() => onPageChange(p)}
+                    aria-current={p === page ? 'page' : undefined}
+                    aria-label={`Page ${p}`}
+                    className={`${classeBouton} ${
+                      p === page
+                        ? 'border-blue-600 bg-blue-600 text-white'
+                        : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-100'
+                    }`}
+                  >
+                    {p}
+                  </button>
+                </li>
+              ),
+            )}
+
+            <li>
+              <button
+                type="button"
+                onClick={() => onPageChange(page + 1)}
+                disabled={page === totalPages}
+                className={`${classeBouton} border-slate-300 bg-white text-slate-700 hover:bg-slate-100`}
+              >
+                Suivant&nbsp;<span aria-hidden="true">›</span>
+              </button>
+            </li>
+          </ul>
+        </nav>
+      )}
     </div>
   );
 }

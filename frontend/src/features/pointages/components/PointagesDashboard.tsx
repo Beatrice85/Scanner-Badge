@@ -5,9 +5,12 @@ import usePointages from '../hooks/usePointages';
 import useEmployes from '../../employes/hooks/useEmployes';
 import useChantiers from '../../chantiers/hooks/useChantiers';
 import FormulairePointage from './FormulairePointage';
+import Pagination from '../../../shared/components/Pagination';
+import usePagination from '../../../shared/hooks/usePagination';
 
 export default function PointagesDashboard() {
   const { pointages, loading, error, create, update, remove } = usePointages();
+  const pagination = usePagination(pointages);
   const { employes } = useEmployes();
   const { chantiers } = useChantiers();
   const [editing, setEditing] = useState<any>(null);
@@ -58,15 +61,15 @@ export default function PointagesDashboard() {
     <div className="min-h-screen bg-[#eef2ff] px-4 py-6 text-slate-900 md:px-6 lg:px-8">
       <div className="mx-auto flex w-full flex-col gap-6 lg:flex-row">
         <Sidebar />
-        <main className="flex-1 lg:ml-80 space-y-6">
+        <main id="contenu" tabIndex={-1} className="flex-1 min-w-0 focus:outline-none lg:ml-80 space-y-6">
           <div className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-xl">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
               <div>
                 <p className="text-sm font-semibold uppercase tracking-[0.3em] text-blue-600">Dashboard</p>
-                <h2 className="mt-2 text-2xl font-semibold text-slate-900">Gestion des pointages</h2>
+                <h1 className="mt-2 text-2xl font-semibold text-slate-900">Gestion des pointages</h1>
                 <p className="mt-1 text-sm text-slate-500">Créez, mettez à jour ou supprimez un pointage.</p>
               </div>
-              <button type="button" className="rounded-full bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-emerald-500" onClick={() => openModal(null)}>
+              <button type="button" className="rounded-full bg-emerald-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-emerald-800" onClick={() => openModal(null)}>
                 + Ajouter un pointage
               </button>
             </div>
@@ -78,21 +81,22 @@ export default function PointagesDashboard() {
 
           <div className="rounded-[24px] border border-slate-200 bg-white p-4 shadow-xl">
             {loading ? (
-              <div className="py-8 text-center text-slate-500">Chargement...</div>
+              <div role="status" aria-live="polite" className="py-8 text-center text-slate-500">Chargement...</div>
             ) : (
-              <div className="overflow-hidden rounded-[20px] border border-slate-200 bg-white shadow-lg">
+              <>
+              <div className="overflow-x-auto rounded-[20px] border border-slate-200 bg-white shadow-lg">
                 <table className="min-w-full divide-y divide-slate-200">
                   <thead className="bg-slate-100">
                     <tr>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Employé</th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Chantier</th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Date</th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Statut</th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Latitude</th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Longitude</th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Satellites</th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Hors zone</th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Actions</th>
+                      <th scope="col" className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Employé</th>
+                      <th scope="col" className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Chantier</th>
+                      <th scope="col" className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Date</th>
+                      <th scope="col" className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Statut</th>
+                      <th scope="col" className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Latitude</th>
+                      <th scope="col" className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Longitude</th>
+                      <th scope="col" className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Satellites</th>
+                      <th scope="col" className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Hors zone</th>
+                      <th scope="col" className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-200">
@@ -101,7 +105,7 @@ export default function PointagesDashboard() {
                         <td colSpan={9} className="px-4 py-8 text-center text-sm text-slate-500">Aucun pointage enregistré.</td>
                       </tr>
                     ) : (
-                      pointages.map((p) => (
+                      pagination.elementsPage.map((p) => (
                         <tr key={String(p.id)} className="hover:bg-slate-50">
                           <td className="px-4 py-3 text-sm text-slate-700">{p.employe?.nom || p.employeId}</td>
                           <td className="px-4 py-3 text-sm text-slate-500">{p.chantier?.nom || p.chantierId}</td>
@@ -125,6 +129,18 @@ export default function PointagesDashboard() {
                   </tbody>
                 </table>
               </div>
+              <Pagination
+                page={pagination.page}
+                totalPages={pagination.totalPages}
+                total={pagination.total}
+                premier={pagination.premier}
+                dernier={pagination.dernier}
+                taille={pagination.taille}
+                onPageChange={pagination.setPage}
+                onTailleChange={pagination.setTaille}
+                libelle="pointages"
+              />
+              </>
             )}
           </div>
 

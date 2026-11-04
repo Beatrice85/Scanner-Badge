@@ -27,6 +27,50 @@ body {
 	-moz-osx-font-smoothing: grayscale;
 }
 
+/* Accessibilité (WCAG 2.1 AA) */
+
+/* 2.4.7 Focus visible : contour net au clavier uniquement (pas au clic souris). */
+:focus-visible {
+	outline: 3px solid #2563eb; /* blue-600, couleur principale */
+	outline-offset: 2px;
+	border-radius: 6px;
+}
+
+/* Sur fond sombre (modales), contour clair pour garder le contraste. */
+.bg-slate-700 :focus-visible,
+.bg-slate-900 :focus-visible {
+	outline-color: #93c5fd; /* blue-300 */
+}
+
+/* 2.3.3 Respect de la préférence système « réduire les animations ». */
+@media (prefers-reduced-motion: reduce) {
+	*,
+	*::before,
+	*::after {
+		animation-duration: 0.01ms !important;
+		animation-iteration-count: 1 !important;
+		transition-duration: 0.01ms !important;
+		scroll-behavior: auto !important;
+	}
+}
+
+/* Lien d'évitement : invisible jusqu'au focus clavier (2.4.1 Contourner des blocs). */
+.lien-evitement {
+	position: absolute;
+	left: 1rem;
+	top: -100px;
+	z-index: 100;
+	padding: 0.75rem 1rem;
+	border-radius: 0.75rem;
+	background: #2563eb;
+	color: #ffffff;
+	font-weight: 600;
+}
+
+.lien-evitement:focus {
+	top: 1rem;
+}
+
 .container {
 	max-width: 1100px;
 	margin: 0 auto;

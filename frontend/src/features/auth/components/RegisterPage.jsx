@@ -56,10 +56,13 @@ export default function RegisterPage() {
 
           <form className="login-form" onSubmit={handleSubmit}>
             <div className="form-group">
-              <label>Nom complet</label>
+              <label htmlFor="register-nom">Nom complet</label>
               <div className="input-icon">
-                <span>👤</span>
+                <span aria-hidden="true">👤</span>
                 <input
+                  id="register-nom"
+                  name="nom"
+                  autoComplete="name"
                   type="text"
                   placeholder="Jean Dupont"
                   value={nom}
@@ -68,10 +71,13 @@ export default function RegisterPage() {
               </div>
             </div>
             <div className="form-group">
-              <label>Adresse Email</label>
+              <label htmlFor="register-email">Adresse Email</label>
               <div className="input-icon">
-                <span>📧</span>
+                <span aria-hidden="true">📧</span>
                 <input
+                  id="register-email"
+                  name="email"
+                  autoComplete="email"
                   type="email"
                   placeholder="employe@example.com"
                   value={email}
@@ -82,7 +88,7 @@ export default function RegisterPage() {
             <div className="form-group">
               <label htmlFor="register-role">Rôle</label>
               <div className="input-icon">
-                <span>🛡️</span>
+                <span aria-hidden="true">🛡️</span>
                 <select id="register-role" value={role} onChange={e => setRole(e.target.value)}>
                   <option value="employe">Employé</option>
                   <option value="admin">Administrateur</option>
@@ -90,10 +96,13 @@ export default function RegisterPage() {
               </div>
             </div>
             <div className="form-group">
-              <label>Mot de passe</label>
+              <label htmlFor="register-password">Mot de passe</label>
               <div className="input-icon">
-                <span>🔒</span>
+                <span aria-hidden="true">🔒</span>
                 <input
+                  id="register-password"
+                  name="password"
+                  autoComplete="new-password"
                   type="password"
                   placeholder="••••••••"
                   value={password}
@@ -102,10 +111,13 @@ export default function RegisterPage() {
               </div>
             </div>
             <div className="form-group">
-              <label>Confirmer le mot de passe</label>
+              <label htmlFor="register-confirm">Confirmer le mot de passe</label>
               <div className="input-icon">
-                <span>🔒</span>
+                <span aria-hidden="true">🔒</span>
                 <input
+                  id="register-confirm"
+                  name="confirmPassword"
+                  autoComplete="new-password"
                   type="password"
                   placeholder="••••••••"
                   value={confirmPassword}
@@ -113,7 +125,7 @@ export default function RegisterPage() {
                 />
               </div>
             </div>
-            {error && <div className="error-message">{error}</div>}
+            {error && <div role="alert" className="error-message">{error}</div>}
             <button type="submit" className="bg-blue-600 text-white btn-full">
               Créer un compte
             </button>

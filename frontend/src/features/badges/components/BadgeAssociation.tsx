@@ -4,6 +4,8 @@ import FenetreModale from '../../../shared/components/FenetreModale';
 import useBadges from '../hooks/useBadges';
 import useEmployes from '../../employes/hooks/useEmployes';
 import useChantiers from '../../chantiers/hooks/useChantiers';
+import Pagination from '../../../shared/components/Pagination';
+import usePagination from '../../../shared/hooks/usePagination';
 
 export default function BadgeAssociation() {
   const { associate, loading: badgeLoading, error: badgeError } = useBadges();
@@ -38,23 +40,24 @@ export default function BadgeAssociation() {
   }, {});
 
   const associations = employes.filter((e) => e.badgeId || e.badge?.uid);
+  const pagination = usePagination(associations);
 
   return (
     <div className="min-h-screen bg-[#eef2ff] px-4 py-6 text-slate-900 md:px-6 lg:px-8">
       <div className="mx-auto flex w-full flex-col gap-6 lg:flex-row">
         <Sidebar />
-        <main className="flex-1 lg:ml-80 space-y-6">
+        <main id="contenu" tabIndex={-1} className="flex-1 min-w-0 focus:outline-none lg:ml-80 space-y-6">
           <div className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-xl">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
               <div>
                 <p className="text-sm font-semibold uppercase tracking-[0.3em] text-blue-600">Dashboard</p>
-                <h2 className="mt-2 text-2xl font-semibold text-slate-900">Gestion des badges</h2>
+                <h1 className="mt-2 text-2xl font-semibold text-slate-900">Gestion des badges</h1>
                 <p className="mt-1 text-sm text-slate-500">Consultez les badges associés et ajoutez une nouvelle association.</p>
               </div>
               <button
                 type="button"
                 onClick={() => setIsModalOpen(true)}
-                className="rounded-full bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-emerald-500"
+                className="rounded-full bg-emerald-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-emerald-800"
               >
                 + Associer un badge
               </button>
@@ -81,21 +84,22 @@ export default function BadgeAssociation() {
             </div>
 
             {employesLoading ? (
-              <div className="py-8 text-center text-slate-500">Chargement...</div>
+              <div role="status" aria-live="polite" className="py-8 text-center text-slate-500">Chargement...</div>
             ) : associations.length === 0 ? (
               <div className="rounded-[20px] border border-slate-200 bg-slate-50 p-6 text-center text-sm text-slate-500">Aucune association de badge trouvée.</div>
             ) : (
-              <div className="overflow-hidden rounded-[20px] border border-slate-200 bg-white shadow-lg">
+              <>
+              <div className="overflow-x-auto rounded-[20px] border border-slate-200 bg-white shadow-lg">
                 <table className="min-w-full divide-y divide-slate-200">
                   <thead className="bg-slate-100">
                     <tr>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">UID Badge</th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Employé</th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Nom chantier</th>
+                      <th scope="col" className="px-4 py-3 text-left text-sm font-semibold text-slate-700">UID Badge</th>
+                      <th scope="col" className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Employé</th>
+                      <th scope="col" className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Nom chantier</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-200">
-                    {associations.map((e) => (
+                    {pagination.elementsPage.map((e) => (
                       <tr key={String(e.id)} className="hover:bg-slate-50">
                         <td className="px-4 py-3 text-sm text-slate-700">{e.badgeId || e.badge?.uid}</td>
                         <td className="px-4 py-3 text-sm text-slate-700">{`${e.nom} ${e.prenom}`}</td>
@@ -105,6 +109,18 @@ export default function BadgeAssociation() {
                   </tbody>
                 </table>
               </div>
+              <Pagination
+                page={pagination.page}
+                totalPages={pagination.totalPages}
+                total={pagination.total}
+                premier={pagination.premier}
+                dernier={pagination.dernier}
+                taille={pagination.taille}
+                onPageChange={pagination.setPage}
+                onTailleChange={pagination.setTaille}
+                libelle="associations"
+              />
+              </>
             )}
           </div>
 
@@ -140,7 +156,7 @@ export default function BadgeAssociation() {
                 <button
                   type="submit"
                   disabled={badgeLoading}
-                  className="rounded-full bg-emerald-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-emerald-400 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="rounded-full bg-emerald-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-emerald-800 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   Associer
                 </button>

@@ -1,4 +1,4 @@
-import { useEffect, type ReactNode } from 'react';
+import { useEffect, useId, useRef, type ReactNode } from 'react';
 
 interface FenetreModaleProps {
   open: boolean;
@@ -11,6 +11,14 @@ interface FenetreModaleProps {
   closeOnBackdropClick?: boolean;
 }
 
+const SELECTEUR_FOCUSABLE =
+  'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
+// Boîte de dialogue modale accessible (WAI-ARIA « dialog (modal) ») :
+// - role="dialog", aria-modal, titre relié par aria-labelledby ;
+// - focus placé dans la fenêtre à l'ouverture, piégé (Tab / Maj+Tab), rendu à l'élément
+//   déclencheur à la fermeture ; Échap ferme ;
+// - défilement de la page bloqué pendant l'ouverture.
 export default function FenetreModale({
   open,
   onClose,
@@ -21,20 +29,56 @@ export default function FenetreModale({
   contentClassName = '',
   closeOnBackdropClick = true,
 }: FenetreModaleProps) {
+  const idTitre = useId();
+  const refFenetre = useRef<HTMLDivElement>(null);
+  const refOnClose = useRef(onClose);
+  refOnClose.current = onClose;
+
   useEffect(() => {
     if (!open) {
       return undefined;
     }
 
+    const declencheur = document.activeElement as HTMLElement | null;
+    const debordementInitial = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    // Premier champ du contenu, sinon la fenêtre elle-même.
+    const fenetre = refFenetre.current;
+    const premierChamp = fenetre?.querySelector<HTMLElement>('input:not([disabled]), select:not([disabled]), textarea:not([disabled])');
+    (premierChamp ?? fenetre)?.focus();
+
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
-        onClose?.();
+        refOnClose.current?.();
+        return;
+      }
+      if (event.key !== 'Tab' || !refFenetre.current) {
+        return;
+      }
+      const focusables = Array.from(refFenetre.current.querySelectorAll<HTMLElement>(SELECTEUR_FOCUSABLE));
+      if (focusables.length === 0) {
+        event.preventDefault();
+        return;
+      }
+      const premier = focusables[0];
+      const dernier = focusables[focusables.length - 1];
+      if (event.shiftKey && document.activeElement === premier) {
+        event.preventDefault();
+        dernier.focus();
+      } else if (!event.shiftKey && document.activeElement === dernier) {
+        event.preventDefault();
+        premier.focus();
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [open, onClose]);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = debordementInitial;
+      declencheur?.focus?.();
+    };
+  }, [open]);
 
   if (!open) {
     return null;
@@ -42,23 +86,28 @@ export default function FenetreModale({
 
   return (
     <div
-      className={`fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 px-4 py-6 backdrop-blur-sm ${className}`.trim()}
+      className={`fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-slate-950/70 px-4 py-6 backdrop-blur-sm ${className}`.trim()}
       onClick={closeOnBackdropClick ? onClose : undefined}
     >
       <div
-        className={`w-full max-w-lg rounded-[24px] border border-white/10 bg-slate-700 p-6 shadow-2xl ${contentClassName}`.trim()}
+        ref={refFenetre}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={title ? idTitre : undefined}
+        tabIndex={-1}
+        className={`my-auto max-h-[calc(100vh-3rem)] w-full max-w-lg overflow-y-auto rounded-[24px] border border-white/10 bg-slate-700 p-6 shadow-2xl ${contentClassName}`.trim()}
         onClick={(event) => event.stopPropagation()}
       >
         <div className="mb-4 flex items-start justify-between gap-4">
-          <div>{title ? <h3 className="text-lg font-semibold text-white">{title}</h3> : null}</div>
+          <div>{title ? <h2 id={idTitre} className="text-lg font-semibold text-white">{title}</h2> : null}</div>
           {onClose ? (
             <button
               type="button"
               onClick={onClose}
-              className="rounded-full border border-white/10 p-2 text-slate-300 transition hover:bg-white/10 hover:text-white"
-              aria-label="Fermer"
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/20 text-lg leading-none text-slate-200 transition hover:bg-white/10 hover:text-white"
+              aria-label="Fermer la fenêtre"
             >
-              ×
+              <span aria-hidden="true">×</span>
             </button>
           ) : null}
         </div>

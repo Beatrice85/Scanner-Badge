@@ -65,7 +65,7 @@ export default function ModaleRefusConge({ conge, nomEmploye, onRefuser, onClose
 						<button type="button" onClick={onClose} className="rounded-full border border-white/10 px-4 py-2 text-sm font-medium text-slate-200 transition hover:bg-white/10">
 							Annuler
 						</button>
-						<button type="submit" disabled={envoi} className="rounded-full bg-rose-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-rose-400 disabled:opacity-60">
+						<button type="submit" disabled={envoi} className="rounded-full bg-rose-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-rose-700 disabled:opacity-60">
 							{envoi ? 'Envoi...' : 'Refuser le congé'}
 						</button>
 					</div>

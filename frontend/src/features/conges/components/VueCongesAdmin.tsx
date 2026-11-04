@@ -8,6 +8,8 @@ import { LIBELLES_STATUT, libelleDuree } from '../utils';
 import BadgeStatutConge from './BadgeStatutConge';
 import FormulaireConge from './FormulaireConge';
 import ModaleRefusConge from './ModaleRefusConge';
+import Pagination from '../../../shared/components/Pagination';
+import usePagination from '../../../shared/hooks/usePagination';
 
 const FILTRES: { valeur: StatutConge | null; libelle: string }[] = [
 	{ valeur: 'EN_ATTENTE', libelle: LIBELLES_STATUT.EN_ATTENTE },
@@ -24,6 +26,7 @@ function nomEmploye(c: Conge) {
 export default function VueCongesAdmin() {
 	const [statut, setStatut] = useState<StatutConge | null>('EN_ATTENTE');
 	const { conges, loading, error, create, update, remove, valider, refuser } = useConges(statut);
+	const pagination = usePagination(conges, undefined, statut);
 	const { employes } = useEmployes();
 
 	const [editing, setEditing] = useState<Conge | null>(null);
@@ -94,7 +97,7 @@ export default function VueCongesAdmin() {
 				</div>
 				<button
 					type="button"
-					className="rounded-full bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-emerald-500"
+					className="rounded-full bg-emerald-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-emerald-800"
 					onClick={() => ouvrirFormulaire(null)}
 				>
 					+ Créer un congé
@@ -109,18 +112,19 @@ export default function VueCongesAdmin() {
 
 			<div className="rounded-[24px] border border-slate-200 bg-white p-4 shadow-xl">
 				{loading ? (
-					<div className="py-8 text-center text-slate-500">Chargement...</div>
+					<div role="status" aria-live="polite" className="py-8 text-center text-slate-500">Chargement...</div>
 				) : (
+					<>
 					<div className="overflow-x-auto rounded-[20px] border border-slate-200 bg-white shadow-lg">
 						<table className="min-w-full divide-y divide-slate-200">
 							<thead className="bg-slate-100">
 								<tr>
-									<th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Employé</th>
-									<th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Période</th>
-									<th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Durée</th>
-									<th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Motif</th>
-									<th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Statut</th>
-									<th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Actions</th>
+									<th scope="col" className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Employé</th>
+									<th scope="col" className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Période</th>
+									<th scope="col" className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Durée</th>
+									<th scope="col" className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Motif</th>
+									<th scope="col" className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Statut</th>
+									<th scope="col" className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Actions</th>
 								</tr>
 							</thead>
 							<tbody className="divide-y divide-slate-200">
@@ -130,7 +134,7 @@ export default function VueCongesAdmin() {
 											{statut === 'EN_ATTENTE' ? 'Aucune demande en attente.' : 'Aucun congé.'}
 										</td>
 									</tr>
-								) : conges.map(c => (
+								) : pagination.elementsPage.map(c => (
 									<tr key={c.id} className="align-top hover:bg-slate-50">
 										<td className="px-4 py-3 text-sm text-slate-700">{nomEmploye(c)}</td>
 										<td className="px-4 py-3 text-sm text-slate-500">
@@ -138,12 +142,12 @@ export default function VueCongesAdmin() {
 										</td>
 										<td className="px-4 py-3 text-sm text-slate-500">{libelleDuree(c)}</td>
 										<td className="max-w-xs whitespace-pre-line break-words px-4 py-3 text-sm text-slate-600">
-											{c.motif || <span className="text-slate-400">—</span>}
+											{c.motif || <span className="text-slate-500">—</span>}
 										</td>
 										<td className="px-4 py-3 text-sm">
 											<BadgeStatutConge statut={c.statut} />
 											{c.traiteLe && (
-												<p className="mt-1 text-xs text-slate-400">Traité le {formaterDate(c.traiteLe)}</p>
+												<p className="mt-1 text-xs text-slate-500">Traité le {formaterDate(c.traiteLe)}</p>
 											)}
 											{c.statut === 'REFUSE' && c.motifRefus && (
 												<p className="mt-1 max-w-xs text-xs text-rose-600">Motif du refus : {c.motifRefus}</p>
@@ -190,6 +194,18 @@ export default function VueCongesAdmin() {
 							</tbody>
 						</table>
 					</div>
+					<Pagination
+						page={pagination.page}
+						totalPages={pagination.totalPages}
+						total={pagination.total}
+						premier={pagination.premier}
+						dernier={pagination.dernier}
+						taille={pagination.taille}
+						onPageChange={pagination.setPage}
+						onTailleChange={pagination.setTaille}
+						libelle="congés"
+					/>
+					</>
 				)}
 			</div>
 

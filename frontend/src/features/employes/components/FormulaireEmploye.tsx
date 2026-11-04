@@ -107,7 +107,7 @@ export default function FormulaireEmploye({ edit, onSubmit, onCancel }: Props) {
 						Annuler
 					</button>
 				) : null}
-				<button type="submit" className="rounded-full bg-emerald-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-emerald-400">
+				<button type="submit" className="rounded-full bg-emerald-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-emerald-800">
 					{isEditing ? 'Enregistrer les modifications' : 'Créer l\'employé'}
 				</button>
 			</div>

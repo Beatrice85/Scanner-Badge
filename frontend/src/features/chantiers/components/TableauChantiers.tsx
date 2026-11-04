@@ -5,9 +5,12 @@ import Sidebar from '../../../shared/components/Sidebar';
 import useChantiers from '../hooks/useChantiers';
 import CarteChantiers from './CarteChantiers';
 import { useAuth } from '../../auth/context/auth-context';
+import Pagination from '../../../shared/components/Pagination';
+import usePagination from '../../../shared/hooks/usePagination';
 
 export default function TableauChantiers() {
 	const { chantiers, loading, error, create, update, remove } = useChantiers();
+	const pagination = usePagination(chantiers);
 	// EMPLOYE : consultation seule (ajout, modification et suppression masqués).
 	const { utilisateur } = useAuth();
 	const lectureSeule = utilisateur?.role !== 'ADMIN';
@@ -43,12 +46,12 @@ export default function TableauChantiers() {
 		<div className="min-h-screen bg-[#eef2ff] px-4 py-6 text-slate-900 md:px-6 lg:px-8">
 			<div className="mx-auto flex w-full flex-col gap-6 lg:flex-row">
 				<Sidebar />
-				<main className="flex-1 lg:ml-80 space-y-6">
+				<main id="contenu" tabIndex={-1} className="flex-1 min-w-0 focus:outline-none lg:ml-80 space-y-6">
 					<div className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-xl">
 						<div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
 							<div>
 								<p className="text-sm font-semibold uppercase tracking-[0.3em] text-blue-600">Dashboard</p>
-								<h2 className="mt-2 text-2xl font-semibold text-slate-900">Gestion des chantiers</h2>
+								<h1 className="mt-2 text-2xl font-semibold text-slate-900">Gestion des chantiers</h1>
 								<p className="mt-1 text-sm text-slate-500">
 									{lectureSeule ? 'Consultation des chantiers.' : 'Liste, ajout, modification et suppression des chantiers.'}
 								</p>
@@ -56,7 +59,7 @@ export default function TableauChantiers() {
 							{!lectureSeule && (
 								<button
 									type="button"
-									className="rounded-full bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-emerald-500"
+									className="rounded-full bg-emerald-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-emerald-800"
 									onClick={() => openModal(null)}
 								>
 									+ Ajouter un chantier
@@ -98,17 +101,18 @@ export default function TableauChantiers() {
 						</div>
 
 						{loading ? (
-							<div className="py-8 text-center text-slate-500">Chargement...</div>
+							<div role="status" aria-live="polite" className="py-8 text-center text-slate-500">Chargement...</div>
 						) : (
-							<div className="overflow-hidden rounded-[20px] border border-slate-200 bg-white shadow-lg">
+							<>
+							<div className="overflow-x-auto rounded-[20px] border border-slate-200 bg-white shadow-lg">
 								<table className="min-w-full divide-y divide-slate-200">
 									<thead className="bg-slate-100">
 										<tr>
-											<th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Nom</th>
-											<th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Latitude</th>
-											<th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Longitude</th>
-											<th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Rayon Tolérance (m)</th>
-											{!lectureSeule && <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Actions</th>}
+											<th scope="col" className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Nom</th>
+											<th scope="col" className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Latitude</th>
+											<th scope="col" className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Longitude</th>
+											<th scope="col" className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Rayon Tolérance (m)</th>
+											{!lectureSeule && <th scope="col" className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Actions</th>}
 										</tr>
 									</thead>
 									<tbody className="divide-y divide-slate-200">
@@ -118,7 +122,7 @@ export default function TableauChantiers() {
 													Aucun chantier enregistré pour le moment.
 												</td>
 											</tr>
-										) : chantiers.map(c => (
+										) : pagination.elementsPage.map(c => (
 											<tr key={String(c.id)} className="hover:bg-slate-50">
 												<td className="px-4 py-3 text-sm text-slate-700">{c.nom}</td>
 												<td className="px-4 py-3 text-sm text-slate-500">{c.latitude ?? '—'}</td>
@@ -135,6 +139,18 @@ export default function TableauChantiers() {
 									</tbody>
 								</table>
 							</div>
+							<Pagination
+								page={pagination.page}
+								totalPages={pagination.totalPages}
+								total={pagination.total}
+								premier={pagination.premier}
+								dernier={pagination.dernier}
+								taille={pagination.taille}
+								onPageChange={pagination.setPage}
+								onTailleChange={pagination.setTaille}
+								libelle="chantiers"
+							/>
+							</>
 						)}
 					</div>
 

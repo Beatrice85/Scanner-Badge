@@ -123,7 +123,7 @@ export default function FormulaireConge({ employes, edit, employeIdParDefaut = '
 						Annuler
 					</button>
 				) : null}
-				<button type="submit" disabled={envoi} className="rounded-full bg-emerald-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-emerald-400 disabled:opacity-60">
+				<button type="submit" disabled={envoi} className="rounded-full bg-emerald-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-emerald-800 disabled:opacity-60">
 					{envoi ? 'Enregistrement...' : isEditing ? 'Enregistrer les modifications' : 'Envoyer la demande'}
 				</button>
 			</div>
