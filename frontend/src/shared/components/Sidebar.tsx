@@ -7,7 +7,8 @@ const adminLinks = [
   { to: '/badges', label: 'Badges' },
   { to: '/pointages', label: 'Pointages' },
   { to: '/conges', label: 'Congés' },
-  { to: '/paie', label: 'Paies' },
+  // À réactiver quand le router paie sera monté dans backend/src/app.ts (page et route /paie à créer).
+  // { to: '/paie', label: 'Paies' },
 ];
 
 export default function Sidebar() {
