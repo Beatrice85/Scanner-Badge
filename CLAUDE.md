@@ -51,9 +51,46 @@ The stack is React 19 + Vite + Tailwind 3, with a mix of `.jsx` and `.tsx` files
   - On load, the provider calls `GET /auth/me`. A 401 or 404 logs the user out.
   - A token whose payload doesn't match `/auth/me` (old token without a role, role changed, account just linked to an employee) also logs the user out. The backend no longer needs this, since it re-reads the role from the database. The check still works, but it forces a re-login that the API doesn't require.
 - `src/routes/RouteurApp.tsx` holds every route. `<RouteProtegee role="ADMIN">` restricts a page to a role and sends anyone else to `/acces-refuse`. Without `role`, any logged-in user is allowed.
-  - When you add a page, register its route there and add the link, with its `roles`, in `src/shared/components/Sidebar.tsx`.
+  - When you add a page, register its route there and add the link in the `RUBRIQUES` constant of `src/shared/components/Sidebar.tsx`. Give it its section, `roles` and an `icone` (add the SVG path to `TRACES` if needed).
   - Hiding a page in the frontend is only ergonomics: real access control is done by the backend.
 - `src/shared/components/` contains reusable UI: Tableau, Pagination, FenetreModale, Bouton, Chargement, StatChart, Sidebar.
+
+## Design and accessibility conventions
+
+Target: WCAG 2.1 level AA. Keep the existing color code and don't introduce new hues.
+
+**Colors:**
+- `blue-600` is the primary color: links, active page, focus.
+- `emerald` is for create and validate actions.
+- `rose` is for errors, refusal and deletion.
+- `amber` is for pending items.
+- `slate` is for text and borders.
+- The page background is `#eef2ff`, and modals are dark (`bg-slate-700`).
+
+**Contrast (4.5:1 minimum for text):**
+- Buttons with white text use `bg-emerald-700 hover:bg-emerald-800` or `bg-rose-600 hover:bg-rose-700`. Never `emerald-400/500/600` or `rose-500` with white text.
+- Secondary text on a light background uses `text-slate-500` at the lightest. `text-slate-400` is only allowed on a dark background.
+
+**Structure:**
+- Each page has one `<h1>` as its title, and its `<main id="contenu" tabIndex={-1}>` is the target of the "Aller au contenu" skip link rendered by `Sidebar`.
+- Every table header cell has `scope="col"`.
+- Loading indicators have `role="status" aria-live="polite"`; errors have `role="alert"`.
+- Every form field has a `<label htmlFor>` and the matching `id`, plus `autoComplete` on login and registration.
+
+**Shared components:**
+- **Every table is paginated** with `usePagination(liste, taille?, cleReinitialisation?)` (`shared/hooks/`) plus `<Pagination … />` (`shared/components/`).
+  - The user can show 10, 20, 30, 50 or 100 rows per page (`TAILLES_PAGE`), 10 by default.
+  - Pagination happens client-side, because the API returns full lists.
+  - Render `pagination.elementsPage` in the `<tbody>`, but keep the "Aucun …" empty-state test on the full list.
+  - Pass a filter as `cleReinitialisation` to go back to page 1 when it changes (see `VueCongesAdmin`).
+  - Table wrappers use `overflow-x-auto`, so tables scroll horizontally on small screens.
+- `FenetreModale` is an accessible dialog: it handles `role="dialog"`, the focus trap, Escape and focus return, so reuse it for any new modal.
+- `Sidebar` is responsive. On small screens it is a top bar with a "Menu" button (`aria-expanded`) that opens a side panel. From `lg` up it is a fixed card (`lg:left-4 lg:w-72`), and pages keep `lg:ml-80`.
+  - Links are left-aligned, each with a decorative SVG icon (`aria-hidden`), and grouped into sections. The ADMIN sees Général, Gestion, Ressources humaines and Administration; the EMPLOYE sees Mon espace and Consultation.
+  - The current page has a `bg-blue-600` background and `aria-current="page"` (`NavLink`, with `end` for `/admin`).
+  - At the bottom, a user block shows initials, name, email, a role badge and "Se déconnecter".
+
+**Global CSS (`index.css`):** keyboard focus outline (`:focus-visible`) and support for `prefers-reduced-motion`.
 
 ## Backend API contract (read-only reference)
 
