@@ -10,6 +10,8 @@ import TableauChantiers from '../features/chantiers/components/TableauChantiers'
 import ListePointages from '../features/pointages/components/ListePointages';
 import BadgeAssociation from '../features/badges/components/BadgeAssociation';
 import ListeConges from '../features/conges/components/ListeConges';
+import AccesRefuse from '../features/auth/components/AccesRefuse';
+import PageUtilisateurs from '../features/users/components/PageUtilisateurs';
 
 export default function RouteurApp() {
   return (
@@ -25,7 +27,7 @@ export default function RouteurApp() {
         <Route
           path="/admin"
           element={
-            <RouteProtegee>
+            <RouteProtegee role="ADMIN">
               <AdminDashboard />
             </RouteProtegee>
           }
@@ -33,7 +35,7 @@ export default function RouteurApp() {
         <Route
           path="/employes"
           element={
-            <RouteProtegee>
+            <RouteProtegee role="ADMIN">
               <TableauEmployes />
             </RouteProtegee>
           }
@@ -49,7 +51,7 @@ export default function RouteurApp() {
         <Route
           path="/pointages"
           element={
-            <RouteProtegee>
+            <RouteProtegee role="ADMIN">
               <ListePointages />
             </RouteProtegee>
           }
@@ -57,7 +59,7 @@ export default function RouteurApp() {
         <Route
           path="/badges"
           element={
-            <RouteProtegee>
+            <RouteProtegee role="ADMIN">
               <BadgeAssociation />
             </RouteProtegee>
           }
@@ -70,6 +72,15 @@ export default function RouteurApp() {
             </RouteProtegee>
           }
         />
+        <Route
+          path="/utilisateurs"
+          element={
+            <RouteProtegee role="ADMIN">
+              <PageUtilisateurs />
+            </RouteProtegee>
+          }
+        />
+        <Route path="/acces-refuse" element={<AccesRefuse />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>

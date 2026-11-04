@@ -1,36 +1,17 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { register } from '../api/auth.api';
+import authApi, { ROLES_INSCRIPTION } from '../api/auth.api';
 
-const TAB_CONFIG = {
-  admin: {
-    label: 'Administrateur',
-    subtitle: 'Créer un compte administrateur',
-    placeholder: 'admin@example.com',
-  },
-  employee: {
-    label: 'Employé',
-    subtitle: 'Créer un compte employé',
-    placeholder: 'employe@example.com',
-  },
-};
-
+// Le rôle choisi ("employe" ou "admin") est envoyé au backend, qui le valide aussi.
+// Pour un compte employé, le backend lie (ou crée) automatiquement sa fiche employé.
 export default function RegisterPage() {
-  const [tab, setTab] = useState('admin');
   const [nom, setNom] = useState('');
   const [email, setEmail] = useState('');
+  const [role, setRole] = useState('employe');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState(null);
   const navigate = useNavigate();
-
-  function handleTabChange(newTab) {
-    setTab(newTab);
-    setError(null);
-    setEmail('');
-    setPassword('');
-    setConfirmPassword('');
-  }
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -41,20 +22,23 @@ export default function RegisterPage() {
       return;
     }
 
+    if (!ROLES_INSCRIPTION.includes(role)) {
+      setError('Rôle invalide : choisissez Employé ou Administrateur');
+      return;
+    }
+
     if (password !== confirmPassword) {
       setError('Les mots de passe ne correspondent pas');
       return;
     }
 
     try {
-      await register({ nom: nom.trim(), email: email.trim(), password });
+      await authApi.register({ nom: nom.trim(), email: email.trim(), password, role });
       navigate('/login');
     } catch (err) {
       setError(err?.message || 'Erreur lors de la création du compte');
     }
   }
-
-  const current = TAB_CONFIG[tab];
 
   return (
     <div className="login-screen">
@@ -63,20 +47,10 @@ export default function RegisterPage() {
           <h1>Inscription</h1>
         </header>
 
-        <div className="login-tabs">
-          <button className={tab === 'admin' ? 'tab active' : 'tab'} type="button" onClick={() => handleTabChange('admin')}>
-            Administrateur
-          </button>
-          <button className={tab === 'employee' ? 'tab active' : 'tab'} type="button" onClick={() => handleTabChange('employee')}>
-            Employé
-          </button>
-        </div>
-
         <div className="login-card">
           <div className="login-card-header">
             <div>
-              <div className="login-card-title">{current.label}</div>
-              <div className="login-card-subtitle">{current.subtitle}</div>
+              <div className="login-card-title">{role === 'admin' ? 'Compte administrateur' : 'Compte employé'}</div>
             </div>
           </div>
 
@@ -99,10 +73,20 @@ export default function RegisterPage() {
                 <span>📧</span>
                 <input
                   type="email"
-                  placeholder={current.placeholder}
+                  placeholder="employe@example.com"
                   value={email}
                   onChange={e => setEmail(e.target.value)}
                 />
+              </div>
+            </div>
+            <div className="form-group">
+              <label htmlFor="register-role">Rôle</label>
+              <div className="input-icon">
+                <span>🛡️</span>
+                <select id="register-role" value={role} onChange={e => setRole(e.target.value)}>
+                  <option value="employe">Employé</option>
+                  <option value="admin">Administrateur</option>
+                </select>
               </div>
             </div>
             <div className="form-group">

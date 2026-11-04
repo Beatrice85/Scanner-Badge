@@ -1,88 +1,51 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { Navigate, useNavigate, Link } from 'react-router-dom';
-import { getCurrentUser, login } from '../api/auth.api';
+import { accueilDuRole, useAuth } from '../context/auth-context';
 
-const TAB_CONFIG = {
-  admin: {
-    label: 'Administrateur',
-    subtitle: 'Espace administration',
-    placeholder: 'admin@example.com',
-  },
-  employee: {
-    label: 'Employé',
-    subtitle: 'Espace Employé',
-    placeholder: 'employe@example.com',
-  },
-};
-
+// Le rôle n'est pas choisi ici : il est renvoyé par le serveur après connexion.
 export default function LoginPage() {
-  const [tab, setTab] = useState('admin');
-  const [email, setEmail] = useState('admin@example.com');
+  const { utilisateur, chargement, erreur: erreurSession, connexion } = useAuth();
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState(null);
-  const [redirectToDashboard, setRedirectToDashboard] = useState(false);
+  const [envoi, setEnvoi] = useState(false);
   const navigate = useNavigate();
-
-  useEffect(() => {
-    const user = getCurrentUser();
-    if (user?.role === 'admin') {
-      setRedirectToDashboard(false);
-    }
-  }, []);
-
-  function handleTabChange(newTab) {
-    setTab(newTab);
-    setError(null);
-    setEmail(newTab === 'admin' ? 'admin@example.com' : '');
-    setPassword('');
-  }
 
   async function handleSubmit(e) {
     e.preventDefault();
     setError(null);
+    setEnvoi(true);
 
     try {
-      const user = await login({ email: email.trim(), password: password.trim() }, tab);
-      if (user.role === 'admin') {
-        navigate('/admin');
-      } else if (user.role === 'employee') {
-        navigate('/employes');
-      }
+      const user = await connexion(email.trim(), password.trim());
+      navigate(accueilDuRole(user.role), { replace: true });
     } catch (err) {
       setError(err?.message || 'Email ou mot de passe invalide');
+    } finally {
+      setEnvoi(false);
     }
   }
 
-  if (redirectToDashboard) {
-    return <Navigate to="/admin" replace />;
+  if (!chargement && utilisateur) {
+    return <Navigate to={accueilDuRole(utilisateur.role)} replace />;
   }
-
-  const current = TAB_CONFIG[tab];
 
   return (
     <div className="login-screen">
       <div className="login-panel">
         <header className="login-hero">
           <h1>Connexion</h1>
-          
         </header>
-
-        <div className="login-tabs">
-          <button className={tab === 'admin' ? 'tab active' : 'tab'} type="button" onClick={() => handleTabChange('admin')}>
-            Administrateur
-          </button>
-          <button className={tab === 'employee' ? 'tab active' : 'tab'} type="button" onClick={() => handleTabChange('employee')}>
-            Employé
-          </button>
-        </div>
 
         <div className="login-card">
           <div className="login-card-header">
             <div>
-              <div className="login-card-title">{current.label}</div>
-              <div className="login-card-subtitle">{current.subtitle}</div>
+              <div className="login-card-title">Espace Scanner Badge</div>
+              <div className="login-card-subtitle">Votre espace s'adapte à votre rôle (administrateur ou employé).</div>
             </div>
           </div>
+
+          {erreurSession && !error && <div className="error-message">{erreurSession}</div>}
 
           <form className="login-form" onSubmit={handleSubmit}>
             <div className="form-group">
@@ -91,7 +54,7 @@ export default function LoginPage() {
                 <span>📧</span>
                 <input
                   type="email"
-                  placeholder={current.placeholder}
+                  placeholder="vous@example.com"
                   value={email}
                   onChange={e => setEmail(e.target.value)}
                 />
@@ -115,8 +78,8 @@ export default function LoginPage() {
               </label>
             </div>
             {error && <div className="error-message">{error}</div>}
-            <button type="submit" className="bg-blue-600 text-white btn-full">
-              Se connecter
+            <button type="submit" className="bg-blue-600 text-white btn-full" disabled={envoi}>
+              {envoi ? 'Connexion...' : 'Se connecter'}
             </button>
           </form>
           <div className="login-footer">

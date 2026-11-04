@@ -1,8 +1,9 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { accueilDuRole, useAuth } from '../auth/context/auth-context';
 
 export default function Home() {
-  const token = localStorage.getItem('auth_token');
+  const { utilisateur } = useAuth();
 
   return (
     <div className="relative min-h-screen bg-[#eef2ff] px-4 py-6 text-slate-900 md:px-6 lg:px-8">
@@ -18,10 +19,10 @@ export default function Home() {
         </div>
 
         <Link
-          to="/login"
+          to={utilisateur ? accueilDuRole(utilisateur.role) : '/login'}
           className="rounded-full bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-blue-500/20 transition hover:bg-blue-500"
         >
-          Se connecter
+          {utilisateur ? 'Mon espace' : 'Se connecter'}
         </Link>
       </div>
 

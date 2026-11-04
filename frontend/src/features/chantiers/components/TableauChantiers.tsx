@@ -4,9 +4,13 @@ import FormulaireChantier from './FormulaireChantier';
 import Sidebar from '../../../shared/components/Sidebar';
 import useChantiers from '../hooks/useChantiers';
 import CarteChantiers from './CarteChantiers';
+import { useAuth } from '../../auth/context/auth-context';
 
 export default function TableauChantiers() {
 	const { chantiers, loading, error, create, update, remove } = useChantiers();
+	// EMPLOYE : consultation seule (ajout, modification et suppression masqués).
+	const { utilisateur } = useAuth();
+	const lectureSeule = utilisateur?.role !== 'ADMIN';
 	const [editing, setEditing] = useState<any>(null);
 	const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -45,15 +49,19 @@ export default function TableauChantiers() {
 							<div>
 								<p className="text-sm font-semibold uppercase tracking-[0.3em] text-blue-600">Dashboard</p>
 								<h2 className="mt-2 text-2xl font-semibold text-slate-900">Gestion des chantiers</h2>
-								<p className="mt-1 text-sm text-slate-500">Liste, ajout, modification et suppression des chantiers.</p>
+								<p className="mt-1 text-sm text-slate-500">
+									{lectureSeule ? 'Consultation des chantiers.' : 'Liste, ajout, modification et suppression des chantiers.'}
+								</p>
 							</div>
-							<button
-								type="button"
-								className="rounded-full bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-emerald-500"
-								onClick={() => openModal(null)}
-							>
-								+ Ajouter un chantier
-							</button>
+							{!lectureSeule && (
+								<button
+									type="button"
+									className="rounded-full bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-emerald-500"
+									onClick={() => openModal(null)}
+								>
+									+ Ajouter un chantier
+								</button>
+							)}
 						</div>
 					</div>
 
@@ -73,8 +81,8 @@ export default function TableauChantiers() {
 							<p className="mt-1 text-2xl font-semibold text-slate-900">0</p>
 						</div>
 						<div className="rounded-[22px] border border-slate-200 bg-slate-50 p-4 shadow-sm">
-							<p className="text-sm text-slate-500">Action rapide</p>
-							<p className="mt-1 text-2xl font-semibold text-slate-900">CRUD</p>
+							<p className="text-sm text-slate-500">{lectureSeule ? 'Accès' : 'Action rapide'}</p>
+							<p className="mt-1 text-2xl font-semibold text-slate-900">{lectureSeule ? 'Lecture seule' : 'CRUD'}</p>
 						</div>
 					</div>
 
@@ -82,7 +90,9 @@ export default function TableauChantiers() {
 						<div className="mb-4 flex items-center justify-between">
 							<div>
 								<h3 className="text-lg font-semibold text-slate-900">Liste des chantiers</h3>
-								<p className="text-sm text-slate-500">Consultez, modifiez ou supprimez un chantier en un clic.</p>
+								<p className="text-sm text-slate-500">
+									{lectureSeule ? 'Consultez la liste et la carte des chantiers.' : 'Consultez, modifiez ou supprimez un chantier en un clic.'}
+								</p>
 							</div>
 							
 						</div>
@@ -98,13 +108,13 @@ export default function TableauChantiers() {
 											<th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Latitude</th>
 											<th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Longitude</th>
 											<th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Rayon Tolérance (m)</th>
-											<th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Actions</th>
+											{!lectureSeule && <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Actions</th>}
 										</tr>
 									</thead>
 									<tbody className="divide-y divide-slate-200">
 										{chantiers.length === 0 ? (
 											<tr>
-												<td colSpan={5} className="px-4 py-8 text-center text-sm text-slate-500">
+												<td colSpan={lectureSeule ? 4 : 5} className="px-4 py-8 text-center text-sm text-slate-500">
 													Aucun chantier enregistré pour le moment.
 												</td>
 											</tr>
@@ -114,10 +124,12 @@ export default function TableauChantiers() {
 												<td className="px-4 py-3 text-sm text-slate-500">{c.latitude ?? '—'}</td>
 												<td className="px-4 py-3 text-sm text-slate-500">{c.longitude ?? '—'}</td>
 												<td className="px-4 py-3 text-sm text-slate-500">{c.rayonToleranceM ?? '—'}</td>
-												<td className="px-4 py-3 text-sm">
-													<button className="mr-2 rounded-md border border-slate-300 px-2 py-1 text-slate-700 transition hover:bg-slate-100" onClick={() => openModal(c)}>Éditer</button>
-													<button className="rounded-md border border-rose-300 px-2 py-1 text-rose-600 transition hover:bg-rose-50" onClick={() => handleDelete(c.id!, c.nom)}>Supprimer</button>
-												</td>
+												{!lectureSeule && (
+													<td className="px-4 py-3 text-sm">
+														<button className="mr-2 rounded-md border border-slate-300 px-2 py-1 text-slate-700 transition hover:bg-slate-100" onClick={() => openModal(c)}>Éditer</button>
+														<button className="rounded-md border border-rose-300 px-2 py-1 text-rose-600 transition hover:bg-rose-50" onClick={() => handleDelete(c.id!, c.nom)}>Supprimer</button>
+													</td>
+												)}
 											</tr>
 										))}
 									</tbody>

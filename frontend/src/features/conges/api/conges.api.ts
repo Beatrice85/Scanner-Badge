@@ -1,14 +1,16 @@
 import client from '../../../shared/lib/client-http';
-import type { Conge, CreateCongePayload, UpdateCongePayload } from '../types';
+import type { Conge, CreateCongePayload, StatutConge, UpdateCongePayload } from '../types';
 
-export type { Conge, CreateCongePayload, UpdateCongePayload };
+export type { Conge, CreateCongePayload, StatutConge, UpdateCongePayload };
 
 export const congesApi = {
-  list: async (): Promise<Conge[]> => {
-    return client.get('/conges');
+  // ADMIN uniquement. statut absent : tous les congés.
+  list: async (statut?: StatutConge): Promise<Conge[]> => {
+    return client.get(statut ? `/conges?statut=${statut}` : '/conges');
   },
-  listByEmploye: async (employeId: string): Promise<Conge[]> => {
-    return client.get(`/conges/employe/${employeId}`);
+  // Congés de l'employé lié au compte connecté (403 si le compte n'est lié à aucun employé).
+  mesConges: async (): Promise<Conge[]> => {
+    return client.get('/conges/moi');
   },
   get: async (id: string): Promise<Conge> => {
     return client.get(`/conges/${id}`);
@@ -21,6 +23,13 @@ export const congesApi = {
   },
   del: async (id: string) => {
     return client.del(`/conges/${id}`);
+  },
+  // ADMIN uniquement
+  valider: async (id: string): Promise<Conge> => {
+    return client.patch(`/conges/${id}/valider`);
+  },
+  refuser: async (id: string, motifRefus: string): Promise<Conge> => {
+    return client.patch(`/conges/${id}/refuser`, { motifRefus });
   },
 };
 
