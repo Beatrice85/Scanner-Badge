@@ -1,28 +1,14 @@
 import client from '../../../shared/lib/client-http';
+import type { ResultatPaie } from '../types';
 
-export type Paie = {
-  id?: string | number;
-  employeId: string | number;
-  montant: number;
-  mois: string;
-  annee: number;
-};
+export type { ResultatPaie };
 
+// Le backend n'expose qu'un calcul en lecture seule (pas de CRUD).
+// dateDebut / dateFin : format "AAAA-MM-JJ".
 export const paieApi = {
-  list: async (): Promise<Paie[]> => {
-    return client.get('/paie');
-  },
-  get: async (id: string | number): Promise<Paie> => {
-    return client.get(`/paie/${id}`);
-  },
-  create: async (payload: Paie): Promise<Paie> => {
-    return client.post('/paie', payload);
-  },
-  update: async (id: string | number, payload: Paie): Promise<Paie> => {
-    return client.put(`/paie/${id}`, payload);
-  },
-  del: async (id: string | number) => {
-    return client.del(`/paie/${id}`);
+  calculer: async (employeId: string, dateDebut: string, dateFin: string): Promise<ResultatPaie> => {
+    const params = new URLSearchParams({ dateDebut, dateFin });
+    return client.get(`/paie/${encodeURIComponent(employeId)}?${params.toString()}`);
   },
 };
 

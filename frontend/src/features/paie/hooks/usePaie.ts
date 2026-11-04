@@ -1,44 +1,29 @@
-import { useEffect, useState } from 'react';
-import paieApi, { Paie } from '../api/paie.api';
+import { useState } from 'react';
+import paieApi from '../api/paie.api';
+import type { ResultatPaie } from '../types';
 
+// Calcul à la demande : pas de chargement automatique, car le backend a besoin
+// d'un employé et d'une période.
 export default function usePaie() {
-	const [paies, setPaies] = useState<Paie[]>([]);
+	const [resultat, setResultat] = useState<ResultatPaie | null>(null);
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 
-	async function fetchAll() {
+	async function calculer(employeId: string, dateDebut: string, dateFin: string) {
 		setLoading(true);
 		setError(null);
 		try {
-			const data = await paieApi.list();
-			setPaies(data || []);
+			const data = await paieApi.calculer(employeId, dateDebut, dateFin);
+			setResultat(data);
+			return data;
 		} catch (err: any) {
+			setResultat(null);
 			setError(err?.message || 'Erreur');
+			return null;
 		} finally {
 			setLoading(false);
 		}
 	}
 
-	async function create(paie: Paie) {
-		const res = await paieApi.create(paie);
-		setPaies(prev => [...prev, res]);
-		return res;
-	}
-
-	async function update(id: string | number, paie: Paie) {
-		const res = await paieApi.update(id, paie);
-		setPaies(prev => prev.map(p => (p.id === id ? res : p)));
-		return res;
-	}
-
-	async function remove(id: string | number) {
-		await paieApi.del(id);
-		setPaies(prev => prev.filter(p => p.id !== id));
-	}
-
-	useEffect(() => {
-		fetchAll();
-	}, []);
-
-	return { paies, loading, error, fetchAll, create, update, remove };
+	return { resultat, loading, error, calculer };
 }
