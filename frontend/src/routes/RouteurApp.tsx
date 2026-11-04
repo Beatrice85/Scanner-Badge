@@ -9,6 +9,7 @@ import TableauEmployes from '../features/employes/components/TableauEmployes';
 import TableauChantiers from '../features/chantiers/components/TableauChantiers';
 import ListePointages from '../features/pointages/components/ListePointages';
 import BadgeAssociation from '../features/badges/components/BadgeAssociation';
+import ListeConges from '../features/conges/components/ListeConges';
 
 export default function RouteurApp() {
   return (
@@ -58,6 +59,14 @@ export default function RouteurApp() {
           element={
             <RouteProtegee>
               <BadgeAssociation />
+            </RouteProtegee>
+          }
+        />
+        <Route
+          path="/conges"
+          element={
+            <RouteProtegee>
+              <ListeConges />
             </RouteProtegee>
           }
         />

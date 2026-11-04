@@ -10,6 +10,18 @@ function getToken() {
   return localStorage.getItem('auth_token') || '';
 }
 
+// Le backend renvoie ses erreurs sous la forme { "message": "..." } :
+// on extrait ce message pour l'afficher tel quel.
+function extraireMessageErreur(text: string): string {
+  try {
+    const data = JSON.parse(text);
+    if (data && typeof data.message === 'string') return data.message;
+  } catch {
+    // corps non JSON : on garde le texte brut
+  }
+  return text;
+}
+
 async function request(path: string, opts: RequestOptions = {}) {
   const url = `${BASE_URL}${path}`;
   console.log("[client-http] BASE_URL:", BASE_URL, "url:", url);
@@ -27,7 +39,7 @@ async function request(path: string, opts: RequestOptions = {}) {
   });
   if (!res.ok) {
     const text = await res.text();
-    throw new Error(text || res.statusText);
+    throw new Error(extraireMessageErreur(text) || res.statusText);
   }
   const contentType = res.headers.get('content-type') || '';
   if (contentType.includes('application/json')) return res.json();

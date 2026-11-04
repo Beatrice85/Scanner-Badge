@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import congesApi, { Conge } from '../api/conges.api';
+import congesApi from '../api/conges.api';
+import type { Conge, CreateCongePayload, UpdateCongePayload } from '../types';
 
 export default function useConges() {
 	const [conges, setConges] = useState<Conge[]>([]);
@@ -19,19 +20,21 @@ export default function useConges() {
 		}
 	}
 
-	async function create(conge: Conge) {
-		const res = await congesApi.create(conge);
-		setConges(prev => [...prev, res]);
+	// POST et PUT ne renvoient pas l'employé associé : on recharge la liste
+	// (triée par dateDebut desc côté backend) après chaque modification.
+	async function create(payload: CreateCongePayload) {
+		const res = await congesApi.create(payload);
+		await fetchAll();
 		return res;
 	}
 
-	async function update(id: string | number, conge: Conge) {
-		const res = await congesApi.update(id, conge);
-		setConges(prev => prev.map(c => (c.id === id ? res : c)));
+	async function update(id: string, payload: UpdateCongePayload) {
+		const res = await congesApi.update(id, payload);
+		await fetchAll();
 		return res;
 	}
 
-	async function remove(id: string | number) {
+	async function remove(id: string) {
 		await congesApi.del(id);
 		setConges(prev => prev.filter(c => c.id !== id));
 	}
