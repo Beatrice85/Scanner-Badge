@@ -5,6 +5,7 @@ export interface CreateEmployeDTO {
     tauxHoraire: number;
     volumeMensuelObligatoire: number;
     chantierId: string;
+    email?: string;
 }
 
 export interface UpdateEmployeDTO {
@@ -14,5 +15,6 @@ export interface UpdateEmployeDTO {
     tauxHoraire?: number;
     volumeMensuelObligatoire?: number;
     chantierId?: string;
+    email?: string | null;
 
 }

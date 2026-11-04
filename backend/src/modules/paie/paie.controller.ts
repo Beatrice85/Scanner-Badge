@@ -1,5 +1,7 @@
 import { Request, Response } from "express";
 import { PaieService } from "./paie.service";
+import { getAuthUser } from "../../middleware/auth.middleware";
+import { HttpError } from "../../errors/http-error";
 
 export class PaieController {
 
@@ -11,6 +13,8 @@ export class PaieController {
         try {
 
             const employeId = String(req.params.employeId);
+
+            this.service.verifierAcces(employeId, getAuthUser(req));
 
             const { dateDebut, dateFin } = req.query;
 
@@ -34,6 +38,10 @@ export class PaieController {
             return res.status(200).json(paie);
 
         } catch (error: any) {
+
+            if (error instanceof HttpError) {
+                return res.status(error.status).json({ message: error.message });
+            }
 
             if (error.message === "Employé introuvable") {
                 return res.status(404).json({ message: error.message });

@@ -1,5 +1,6 @@
 import { PaieService } from "../paie.service";
 import { PaieRepository } from "../paie.repository";
+import { HttpError } from "../../../errors/http-error";
 
 describe("PaieService", () => {
 
@@ -13,6 +14,37 @@ describe("PaieService", () => {
         } as unknown as jest.Mocked<PaieRepository>;
 
         service = new PaieService(repository);
+    });
+
+
+    describe("verifierAcces", () => {
+
+        it("autorise un ADMIN pour n'importe quel employé", () => {
+
+            expect(() => service.verifierAcces("emp-1", { id: "u", email: "a@test.com", role: "ADMIN", employeId: null })).not.toThrow();
+        });
+
+
+        it("autorise un EMPLOYE pour sa propre paie", () => {
+
+            expect(() => service.verifierAcces("emp-1", { id: "u", email: "e@test.com", role: "EMPLOYE", employeId: "emp-1" })).not.toThrow();
+        });
+
+
+        it("refuse (403) un EMPLOYE pour la paie d'un autre", () => {
+
+            const appel = () => service.verifierAcces("emp-2", { id: "u", email: "e@test.com", role: "EMPLOYE", employeId: "emp-1" });
+
+            expect(appel).toThrow(HttpError);
+            expect(appel).toThrow("Accès refusé : vous ne pouvez consulter que votre propre paie");
+        });
+
+
+        it("refuse (403) un EMPLOYE sans fiche employé", () => {
+
+            expect(() => service.verifierAcces("emp-1", { id: "u", email: "e@test.com", role: "EMPLOYE", employeId: null })).toThrow(HttpError);
+        });
+
     });
 
 
@@ -86,6 +118,7 @@ describe("PaieService", () => {
 
                 conges: [
                     {
+                        statut: "VALIDE",
                         dateDebut: new Date("2026-08-10"),
                         dateFin: new Date("2026-08-11")
                     }
@@ -241,6 +274,7 @@ describe("PaieService", () => {
 
                 conges: [
                     {
+                        statut: "VALIDE",
                         dateDebut: new Date("2026-07-30"),
                         dateFin: new Date("2026-08-03")
                     }
@@ -362,6 +396,40 @@ describe("PaieService", () => {
             expect(result.penalites).toBe(0);
 
             expect(result.salaireTotal).toBe(80000);
+        });
+
+
+        it("ne doit compter que les congés VALIDE (EN_ATTENTE et REFUSE ignorés)", async () => {
+
+            const employe = {
+                id: "emp-1",
+                nom: "Rakoto",
+                prenom: "Jean",
+                tauxHoraire: 5000,
+                volumeMensuelObligatoire: 160,
+
+                pointages: [],
+
+                conges: [
+                    { statut: "VALIDE", dateDebut: new Date("2026-08-10"), dateFin: new Date("2026-08-11") },
+                    { statut: "EN_ATTENTE", dateDebut: new Date("2026-08-17"), dateFin: new Date("2026-08-19") },
+                    { statut: "REFUSE", dateDebut: new Date("2026-08-24"), dateFin: new Date("2026-08-25") }
+                ]
+            };
+
+            repository.findEmployeWithData.mockResolvedValue(
+                employe as any
+            );
+
+            const result = await service.calculerPaie(
+                "emp-1",
+                new Date("2026-08-01"),
+                new Date("2026-09-01")
+            );
+
+            expect(result.joursCongesPayes).toBe(2);
+
+            expect(result.heuresCongesPayes).toBe(16);
         });
 
     });

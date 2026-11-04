@@ -1,4 +1,5 @@
 import { prisma } from "../../database/prisma.service";
+import { StatutConge } from "@prisma/client";
 
 export class PaieRepository {
 
@@ -17,6 +18,7 @@ export class PaieRepository {
 
                 conges: {
                     where: {
+                        statut: StatutConge.VALIDE,
                         dateDebut: {
                             lte: dateFin
                         },

@@ -1,4 +1,7 @@
 import { PaieRepository } from "./paie.repository";
+import { Role, StatutConge } from "@prisma/client";
+import { AuthPayload } from "../../middleware/auth.middleware";
+import { HttpError } from "../../errors/http-error";
 
 const HEURES_THEORIQUES_PAR_JOUR = 8;
 const MAJORATION_HEURES_SUPPLEMENTAIRES = 1.25;
@@ -9,6 +12,14 @@ export class PaieService {
 
     constructor(repository?: PaieRepository) {
         this.repository = repository ?? new PaieRepository();
+    }
+
+    // ADMIN : toute paie. EMPLOYE : uniquement la sienne (employeId du token).
+    verifierAcces(employeId: string, acteur: AuthPayload) {
+
+        if (acteur.role !== Role.ADMIN && acteur.employeId !== employeId) {
+            throw new HttpError(403, "Accès refusé : vous ne pouvez consulter que votre propre paie");
+        }
     }
 
     async calculerPaie( employeId: string, dateDebut: Date, dateFin: Date ) {
@@ -109,6 +120,11 @@ export class PaieService {
         let total = 0;
 
         for (const conge of conges) {
+
+            // Seuls les congés validés sont payés (EN_ATTENTE et REFUSE ignorés).
+            if (conge.statut !== StatutConge.VALIDE) {
+                continue;
+            }
 
             const debut = new Date( Math.max( conge.dateDebut.getTime(), dateDebut.getTime()) );
 

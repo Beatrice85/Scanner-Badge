@@ -8,12 +8,21 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
+enum Role {
+  ADMIN
+  EMPLOYE
+}
+
 model User {
-  id        String   @id @default(uuid())
-  nom       String
-  email     String   @unique
-  password  String
-  createdAt DateTime @default(now())
+  id            String   @id @default(uuid())
+  nom           String
+  email         String   @unique
+  password      String
+  role          Role     @default(EMPLOYE)
+  employeId     String?  @unique
+  employe       Employe? @relation(fields: [employeId], references: [id])
+  congesTraites Conge[]  @relation("CongeTraitePar")
+  createdAt     DateTime @default(now())
 
   @@map("users")
 }
@@ -38,13 +47,24 @@ model Employe {
   prenom                   String
   tauxHoraire              Decimal    @db.Decimal(10, 2)
   volumeMensuelObligatoire Int
-  chantierId               String
+  // Facultatif : sert à lier automatiquement un compte EMPLOYE à sa fiche (comparaison sans casse).
+  email                    String?    @unique
+  // Facultatif : une fiche créée à l'inscription n'a pas encore de chantier.
+  chantierId               String?
   badge                    Badge?
-  chantier                 Chantier   @relation(fields: [chantierId], references: [id])
+  // onDelete: Restrict conserve le comportement d'avant (suppression d'un chantier refusée s'il a des employés).
+  chantier                 Chantier?  @relation(fields: [chantierId], references: [id], onDelete: Restrict)
   pointages                Pointage[]
   conges                   Conge[]
+  user                     User?
 
   @@map("employes")
+}
+
+enum StatutConge {
+  EN_ATTENTE
+  VALIDE
+  REFUSE
 }
 
 model Conge {
@@ -55,6 +75,15 @@ model Conge {
 
   dateDebut DateTime
   dateFin   DateTime
+
+  // Motif de la demande, facultatif (saisi par l'employé ou l'admin qui crée le congé).
+  motif String?
+
+  statut      StatutConge @default(EN_ATTENTE)
+  motifRefus  String?
+  traiteParId String?
+  traitePar   User?       @relation("CongeTraitePar", fields: [traiteParId], references: [id])
+  traiteLe    DateTime?
 
   createdAt DateTime @default(now())
 

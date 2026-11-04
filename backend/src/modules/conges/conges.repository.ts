@@ -1,9 +1,14 @@
 import { prisma } from "../../database/prisma.service";
-import { CreateCongeDto, UpdateCongeDto } from "./conges.dto";
+import { StatutConge } from "@prisma/client";
+
+// Congés pris en compte pour le contrôle de chevauchement (les refusés sont ignorés).
+const STATUTS_ACTIFS: StatutConge[] = [StatutConge.EN_ATTENTE, StatutConge.VALIDE];
+
 export class CongesRepository {
-    async findall() {
+    async findall(statut?: StatutConge) {
         return  prisma.conge.findMany(
             {
+                where: statut ? { statut } : undefined,
                 include: { employe: true },
                 orderBy: {dateDebut: 'desc' }
             }
@@ -42,6 +47,7 @@ export class CongesRepository {
             {
                 where: {
                     employeId,
+                    statut: { in: STATUTS_ACTIFS },
                     ...(excludeId && { id: { not: excludeId } }),
                     dateDebut: {
                         lte: dateFin
@@ -55,11 +61,20 @@ export class CongesRepository {
         )
     }
 
-    async create( data: {employeId: string; dateDebut: Date; dateFin: Date; }) {
+    async create( data: {employeId: string; dateDebut: Date; dateFin: Date; motif: string | null; }) {
         return prisma.conge.create({ data });
     }
 
-    async update(id: string,   data: { dateDebut?: Date; dateFin?: Date; }) {
+    async update(id: string,   data: { dateDebut?: Date; dateFin?: Date; motif?: string | null; }) {
+        return prisma.conge.update(
+           {
+              where: { id },
+              data
+           }
+        )
+    }
+
+    async updateStatut(id: string, data: { statut: StatutConge; traiteParId: string; traiteLe: Date; motifRefus: string | null }) {
         return prisma.conge.update(
            {
               where: { id },

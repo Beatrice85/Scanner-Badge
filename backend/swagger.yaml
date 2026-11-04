@@ -19,6 +19,8 @@ tags:
   - name: Geofencing
   - name: Pointages
   - name: Congés
+  - name: Paie
+  - name: Utilisateurs
 
 
 components:
@@ -28,6 +30,10 @@ components:
       type: http
       scheme: bearer
       bearerFormat: JWT
+      description: >
+        Le token identifie le compte (id). À chaque requête, le rôle et l'employeId sont relus
+        en base : un changement de rôle ou de liaison s'applique immédiatement, sans reconnexion.
+        Un token valide dont le compte n'existe plus est refusé (401 « compte introuvable »).
 
 
   schemas:
@@ -41,6 +47,14 @@ components:
           type: string
         email:
           type: string
+        role:
+          type: string
+          enum: [ADMIN, EMPLOYE]
+        employeId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Employé associé au compte (null si aucun)
 
 
     Chantier:
@@ -79,8 +93,15 @@ components:
         volumeMensuelObligatoire:
           type: integer
           example: 160
+        email:
+          type: string
+          nullable: true
+          description: Unique. Sert à lier automatiquement un compte EMPLOYE à sa fiche (sans tenir compte de la casse).
+          example: jean.rakoto@example.com
         chantierId:
           type: string
+          nullable: true
+          description: Null pour une fiche créée automatiquement à l'inscription ; les pointages sont refusés tant qu'un chantier n'est pas affecté.
 
 
     Badge:
@@ -117,7 +138,7 @@ components:
           type: string
           format: date-time
 
-        Conge:
+    Conge:
       type: object
       properties:
         id:
@@ -140,6 +161,33 @@ components:
           format: date-time
           example: "2026-08-21T00:00:00.000Z"
 
+        motif:
+          type: string
+          nullable: true
+          description: Motif de la demande (facultatif)
+          example: "Mariage de ma sœur"
+
+        statut:
+          type: string
+          enum: [EN_ATTENTE, VALIDE, REFUSE]
+          example: EN_ATTENTE
+
+        motifRefus:
+          type: string
+          nullable: true
+          example: null
+
+        traiteParId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Utilisateur (ADMIN) ayant validé ou refusé le congé
+
+        traiteLe:
+          type: string
+          format: date-time
+          nullable: true
+
         createdAt:
           type: string
           format: date-time
@@ -152,13 +200,13 @@ components:
     CreateConge:
       type: object
       required:
-        - employeId
         - dateDebut
         - dateFin
       properties:
         employeId:
           type: string
           format: uuid
+          description: Obligatoire pour un ADMIN. Ignoré pour un EMPLOYE (l'employé du token est utilisé).
           example: "660e8400-e29b-41d4-a716-446655440000"
 
         dateDebut:
@@ -170,6 +218,13 @@ components:
           type: string
           format: date
           example: "2026-08-21"
+
+        motif:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Facultatif. Texte vide ou null -> aucun motif. 400 si ce n'est pas du texte ou s'il dépasse 500 caractères.
+          example: "Mariage de ma sœur"
 
 
     UpdateConge:
@@ -183,7 +238,114 @@ components:
         dateFin:
           type: string
           format: date
-          example: "2026-08-22"      
+          example: "2026-08-22"
+
+        motif:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Absent -> motif inchangé ; texte vide ou null -> motif effacé.
+          example: "Mariage de ma sœur"
+
+
+    RefuserConge:
+      type: object
+      required:
+        - motifRefus
+      properties:
+        motifRefus:
+          type: string
+          example: "Période de forte activité sur le chantier"
+
+
+    LierEmploye:
+      type: object
+      required:
+        - employeId
+      properties:
+        employeId:
+          type: string
+          format: uuid
+          example: "660e8400-e29b-41d4-a716-446655440000"
+
+
+    ChangerRole:
+      type: object
+      required:
+        - role
+      properties:
+        role:
+          type: string
+          enum: [ADMIN, EMPLOYE]
+          example: ADMIN
+
+
+    Message:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "Accès refusé : rôle insuffisant"
+
+
+    LoginResponse:
+      type: object
+      properties:
+        token:
+          type: string
+          description: "JWT dont le payload contient { id, email, role, employeId } ; seul id fait foi côté serveur (rôle et employeId relus en base)"
+        role:
+          type: string
+          enum: [ADMIN, EMPLOYE]
+        employeId:
+          type: string
+          format: uuid
+          nullable: true
+
+
+    ResultatPaie:
+      type: object
+      properties:
+        employeId:
+          type: string
+          format: uuid
+        nom:
+          type: string
+        prenom:
+          type: string
+        periode:
+          type: object
+          properties:
+            dateDebut:
+              type: string
+              format: date-time
+            dateFin:
+              type: string
+              format: date-time
+        tauxHoraire:
+          type: number
+        heuresTravaillees:
+          type: number
+        heuresCongesPayes:
+          type: number
+          description: Congés VALIDE uniquement (8 h par jour)
+        heuresSupplementaires:
+          type: number
+        heuresAbsenceNonJustifiee:
+          type: number
+        joursCongesPayes:
+          type: integer
+        salaireHeuresTravaillees:
+          type: number
+        salaireCongesPayes:
+          type: number
+        bonusHeuresSupplementaires:
+          type: number
+          description: Heures supplémentaires majorées de 25 %
+        penalites:
+          type: number
+        salaireTotal:
+          type: number
 
 
 
@@ -198,6 +360,17 @@ paths:
         - Auth
 
       summary: Inscription utilisateur
+
+      description: >
+        Crée un compte avec le rôle choisi : "employe" (EMPLOYE, valeur par défaut si role est absent)
+        ou "admin" (ADMIN). Toute autre valeur est refusée (400).
+        ATTENTION : cette route est publique, donc n'importe quel visiteur peut se créer un compte ADMIN.
+
+        Pour un compte EMPLOYE, dans la même transaction : si une fiche Employé libre (liée à aucun
+        compte) a le même email (sans tenir compte de la casse), elle est liée au compte ; sinon une
+        fiche est créée (prénom = premier mot du nom, nom = la suite, email en minuscules, sans
+        chantier, tauxHoraire et volumeMensuelObligatoire à 0) puis liée. Si cette étape échoue,
+        le compte n'est pas créé. Un compte ADMIN n'a pas de fiche.
 
       requestBody:
         required: true
@@ -228,11 +401,35 @@ paths:
                   type: string
                   example: password123
 
+                role:
+                  type: string
+                  enum: [employe, admin]
+                  default: employe
+                  example: employe
+
 
       responses:
 
-        "201":
-          description: Utilisateur créé
+        "200":
+          description: Utilisateur créé (id, nom, email, role, employeId de la fiche liée, null pour un ADMIN)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+
+        "400":
+          description: Rôle invalide, ou email déjà utilisé
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Message"
+
+        "409":
+          description: Une fiche employé avec cet email est déjà liée à un autre compte (aucun compte créé)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Message"
 
 
 
@@ -271,6 +468,46 @@ paths:
 
         "200":
           description: Connexion réussie
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoginResponse"
+
+        "400":
+          description: Utilisateur introuvable ou mot de passe incorrect
+
+
+
+  /auth/me:
+
+    get:
+
+      tags:
+        - Auth
+
+      summary: Utilisateur connecté
+
+      security:
+        - bearerAuth: []
+
+      responses:
+
+        "200":
+          description: Utilisateur connecté (sans mot de passe)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+
+        "401":
+          description: Token manquant ou invalide
+
+        "404":
+          description: Utilisateur introuvable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Message"
 
 
 
@@ -1251,237 +1488,484 @@ paths:
   
   
 # ================= CONGES =================
+# Rôles : ADMIN gère tous les congés ; EMPLOYE ne voit et ne gère que les siens.
+# Erreurs au format { message } : 400 données invalides, 401 token, 403 rôle ou propriété,
+# 404 introuvable, 409 transition de statut impossible.
 
   /conges:
 
     get:
       tags:
         - Congés
-
-      summary: Récupérer tous les congés
-
-      description: Retourne tous les congés avec les informations des employés.
-
+      summary: Lister les congés (ADMIN)
+      description: Retourne tous les congés avec l'employé associé, triés par date de début décroissante.
       security:
         - bearerAuth: []
-
+      parameters:
+        - in: query
+          name: statut
+          required: false
+          schema:
+            type: string
+            enum: [EN_ATTENTE, VALIDE, REFUSE]
       responses:
         "200":
           description: Liste des congés
-
           content:
             application/json:
               schema:
                 type: array
                 items:
                   $ref: "#/components/schemas/Conge"
-
+        "400":
+          description: Statut invalide
         "401":
           description: Token manquant ou invalide
-
-        "500":
-          description: Erreur serveur
-
+        "403":
+          description: Rôle insuffisant (ADMIN requis)
 
     post:
       tags:
         - Congés
-
-      summary: Créer un congé
-
-      description: Crée un congé pour un employé.
-
+      summary: Demander un congé
+      description: >
+        Le congé est créé au statut EN_ATTENTE. Un EMPLOYE crée toujours pour son propre employé
+        (l'employeId du corps est ignoré). Un ADMIN doit préciser employeId.
+        Les congés EN_ATTENTE et VALIDE du même employé ne doivent pas chevaucher la période.
       security:
         - bearerAuth: []
-
       requestBody:
         required: true
-
         content:
           application/json:
             schema:
               $ref: "#/components/schemas/CreateConge"
-
-            example:
-              employeId: "660e8400-e29b-41d4-a716-446655440000"
-              dateDebut: "2026-08-17"
-              dateFin: "2026-08-21"
-
       responses:
         "201":
-          description: Congé créé avec succès
-
+          description: Congé créé (EN_ATTENTE)
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Conge"
-
         "400":
-          description: |
-            Erreur de validation.
-            Exemple : date de début après la date de fin,
-            employé introuvable ou congé chevauchant une autre période.
-
+          description: Dates invalides, employeId manquant (ADMIN) ou chevauchement
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Message"
         "401":
           description: Token manquant ou invalide
+        "403":
+          description: Compte EMPLOYE non associé à un employé
+        "404":
+          description: Employé introuvable
 
+  /conges/moi:
+
+    get:
+      tags:
+        - Congés
+      summary: Mes congés
+      description: Congés de l'employé associé au compte connecté.
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Liste des congés
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Conge"
+        "401":
+          description: Token manquant ou invalide
+        "403":
+          description: Compte non associé à un employé
 
   /conges/employe/{employeId}:
 
     get:
       tags:
         - Congés
-
-      summary: Récupérer les congés d'un employé
-
+      summary: Congés d'un employé
+      description: ADMIN, ou l'employé concerné uniquement.
       security:
         - bearerAuth: []
-
       parameters:
-        - name: employeId
-          in: path
+        - in: path
+          name: employeId
           required: true
-
-          description: Identifiant de l'employé
-
           schema:
             type: string
             format: uuid
-
       responses:
         "200":
-          description: Liste des congés de l'employé
-
+          description: Liste des congés
           content:
             application/json:
               schema:
                 type: array
-
                 items:
                   $ref: "#/components/schemas/Conge"
-
         "401":
           description: Token manquant ou invalide
-
-        "500":
-          description: Erreur serveur
-
+        "403":
+          description: Congés d'un autre employé
 
   /conges/{id}:
 
     get:
       tags:
         - Congés
-
-      summary: Récupérer un congé par son ID
-
+      summary: Détail d'un congé
+      description: ADMIN, ou l'employé concerné uniquement.
       security:
         - bearerAuth: []
-
       parameters:
-        - name: id
-          in: path
+        - in: path
+          name: id
           required: true
-
-          description: Identifiant du congé
-
           schema:
             type: string
             format: uuid
-
       responses:
         "200":
-          description: Congé trouvé
-
+          description: Congé
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Conge"
-
-        "404":
-          description: Congé introuvable
-
         "401":
           description: Token manquant ou invalide
-
+        "403":
+          description: Congé d'un autre employé
+        "404":
+          description: Congé introuvable
 
     put:
       tags:
         - Congés
-
-      summary: Modifier un congé
-
+      summary: Modifier les dates d'un congé
+      description: ADMIN, ou EMPLOYE propriétaire seulement si le congé est EN_ATTENTE.
       security:
         - bearerAuth: []
-
       parameters:
-        - name: id
-          in: path
+        - in: path
+          name: id
           required: true
-
-          description: Identifiant du congé
-
           schema:
             type: string
             format: uuid
-
       requestBody:
         required: true
-
         content:
           application/json:
             schema:
               $ref: "#/components/schemas/UpdateConge"
-
-            example:
-              dateDebut: "2026-08-18"
-              dateFin: "2026-08-22"
-
       responses:
         "200":
-          description: Congé modifié avec succès
-
+          description: Congé modifié
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Conge"
-
         "400":
-          description: Dates invalides ou chevauchement avec un autre congé
-
-        "404":
-          description: Congé introuvable
-
+          description: Dates invalides ou chevauchement
         "401":
           description: Token manquant ou invalide
-
+        "403":
+          description: Congé d'un autre employé
+        "404":
+          description: Congé introuvable
+        "409":
+          description: Congé déjà traité (EMPLOYE)
 
     delete:
       tags:
         - Congés
-
       summary: Supprimer un congé
-
+      description: ADMIN, ou EMPLOYE propriétaire seulement si le congé est EN_ATTENTE.
       security:
         - bearerAuth: []
-
       parameters:
-        - name: id
-          in: path
+        - in: path
+          name: id
           required: true
-
-          description: Identifiant du congé
-
           schema:
             type: string
             format: uuid
-
       responses:
         "204":
-          description: Congé supprimé avec succès
-
-        "404":
-          description: Congé introuvable
-
+          description: Congé supprimé
         "401":
           description: Token manquant ou invalide
+        "403":
+          description: Congé d'un autre employé
+        "404":
+          description: Congé introuvable
+        "409":
+          description: Congé déjà traité (EMPLOYE)
+
+  /conges/{id}/valider:
+
+    patch:
+      tags:
+        - Congés
+      summary: Valider un congé (ADMIN)
+      description: EN_ATTENTE vers VALIDE. Enregistre traiteParId et traiteLe.
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Congé validé
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Conge"
+        "401":
+          description: Token manquant ou invalide
+        "403":
+          description: Rôle insuffisant (ADMIN requis)
+        "404":
+          description: Congé introuvable
+        "409":
+          description: Transition impossible (congé déjà validé ou refusé)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Message"
+
+  /conges/{id}/refuser:
+
+    patch:
+      tags:
+        - Congés
+      summary: Refuser un congé (ADMIN)
+      description: EN_ATTENTE vers REFUSE, avec un motif obligatoire.
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RefuserConge"
+      responses:
+        "200":
+          description: Congé refusé
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Conge"
+        "400":
+          description: Motif de refus manquant
+        "401":
+          description: Token manquant ou invalide
+        "403":
+          description: Rôle insuffisant (ADMIN requis)
+        "404":
+          description: Congé introuvable
+        "409":
+          description: Transition impossible (congé déjà validé ou refusé)
+
+
+# ================= PAIE =================
+
+  /paie/{employeId}:
+
+    get:
+      tags:
+        - Paie
+      summary: Calculer la paie d'un employé sur une période
+      description: >
+        Calcul à la volée, rien n'est enregistré. Seuls les congés VALIDE sont payés.
+        ADMIN pour tout employé ; EMPLOYE uniquement pour son propre employeId.
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: employeId
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - in: query
+          name: dateDebut
+          required: true
+          schema:
+            type: string
+            format: date
+            example: "2026-08-01"
+        - in: query
+          name: dateFin
+          required: true
+          schema:
+            type: string
+            format: date
+            example: "2026-08-31"
+      responses:
+        "200":
+          description: Résultat du calcul
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResultatPaie"
+        "400":
+          description: Dates manquantes, invalides ou début après fin
+        "401":
+          description: Token manquant ou invalide
+        "403":
+          description: Paie d'un autre employé (EMPLOYE)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Message"
+        "404":
+          description: Employé introuvable
+        "500":
+          description: Erreur lors du calcul de la paie
+
+
+# ================= UTILISATEURS =================
+
+  /users:
+
+    get:
+      tags:
+        - Utilisateurs
+      summary: Lister les comptes (ADMIN)
+      description: id, nom, email, role et employeId de chaque compte, sans mot de passe.
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Liste des comptes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/User"
+        "401":
+          description: Token manquant ou invalide
+        "403":
+          description: Rôle insuffisant (ADMIN requis)
+
+  /users/{id}/employe:
+
+    patch:
+      tags:
+        - Utilisateurs
+      summary: Lier un compte à un employé (ADMIN)
+      description: >
+        Renseigne User.employeId. Sans effet si le compte est déjà lié à cet employé ;
+        remplace le lien si le compte était lié à un autre employé.
+        Effet immédiat sur l'API (l'employeId est relu en base à chaque requête).
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LierEmploye"
+      responses:
+        "200":
+          description: Compte mis à jour
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "400":
+          description: employeId manquant
+        "401":
+          description: Token manquant ou invalide
+        "403":
+          description: Rôle insuffisant (ADMIN requis)
+        "404":
+          description: Utilisateur ou employé introuvable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Message"
+        "409":
+          description: Employé déjà lié à un autre compte
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Message"
+
+  /users/{id}/role:
+
+    patch:
+      tags:
+        - Utilisateurs
+      summary: Changer le rôle d'un compte (ADMIN)
+      description: >
+        Passe un compte en ADMIN ou en EMPLOYE. Sans effet si le compte a déjà ce rôle.
+        Effet immédiat sur l'API (le rôle est relu en base à chaque requête).
+        Le décompte des ADMIN et la mise à jour se font dans une même transaction, lignes ADMIN
+        verrouillées : deux rétrogradations simultanées ne peuvent pas supprimer le dernier ADMIN.
+        POST /auth/register crée toujours un EMPLOYE : c'est la seule façon de promouvoir un compte, avec le seed.
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChangerRole"
+      responses:
+        "200":
+          description: Compte mis à jour
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "400":
+          description: Rôle absent ou invalide
+        "401":
+          description: Token manquant ou invalide
+        "403":
+          description: Rôle insuffisant (ADMIN requis), ou modification de son propre rôle
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Message"
+        "404":
+          description: Utilisateur introuvable
+        "409":
+          description: Rétrogradation du dernier administrateur
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Message"
