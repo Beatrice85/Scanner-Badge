@@ -1,34 +1,44 @@
-import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useEffect, useState } from 'react';
 import { employesApi } from '../employes/api/employes.api';
+import chantiersApi from '../chantiers/api/chantiers.api';
+import pointagesApi from '../pointages/api/pointages.api';
+import congesApi from '../conges/api/conges.api';
 import StatChart from '../../shared/components/StatChart';
 import Sidebar from '../../shared/components/Sidebar';
 
 type Stats = {
   employes: number;
+  badges: number;
   chantiers: number;
+  pointages: number;
+  conges: number;
+  paiesCalculables: number;
 };
 
 export default function AdminDashboard() {
-  const [stats, setStats] = useState<Stats>({
-    employes: 0,
-    chantiers: 2,
-  });
+  const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     async function loadStats() {
       try {
-        const employes = await employesApi.list();
+        const [employes, chantiers, pointages, conges] = await Promise.all([
+          employesApi.list(),
+          chantiersApi.list(),
+          pointagesApi.list(),
+          congesApi.list(),
+        ]);
         setStats({
           employes: employes.length,
-          chantiers: 2,
+          badges: employes.filter((employe) => Boolean(employe.badge?.uid || employe.badgeId)).length,
+          chantiers: chantiers.length,
+          pointages: pointages.length,
+          conges: conges.length,
+          paiesCalculables: employes.length,
         });
-      } catch {
-        setStats({
-          employes: 0,
-          chantiers: 2,
-        });
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Impossible de charger les statistiques.');
       } finally {
         setLoading(false);
       }
@@ -37,8 +47,12 @@ export default function AdminDashboard() {
   }, []);
 
   const statCards = [
-    { label: 'Employés', value: stats.employes, color: 'text-blue-400' },
-    { label: 'Chantiers', value: stats.chantiers, color: 'text-blue-400' },
+    { label: 'Employés', value: stats?.employes ?? 0 },
+    { label: 'Badges associés', value: stats?.badges ?? 0 },
+    { label: 'Chantiers', value: stats?.chantiers ?? 0 },
+    { label: 'Pointages', value: stats?.pointages ?? 0 },
+    { label: 'Congés', value: stats?.conges ?? 0 },
+    { label: 'Paies calculables', value: stats?.paiesCalculables ?? 0 },
   ];
 
   const chartData = statCards.map((card) => ({ label: card.label, value: card.value }));
@@ -53,24 +67,35 @@ export default function AdminDashboard() {
             Tableau de bord administrateur
           </h1>
           <p className="mt-4 max-w-2xl text-lg text-slate-600">
-            Gérez les employés et les chantiers depuis un espace unique.
+            Gérez les employés et les chantiers, et consultez les volumes de badges, pointages, congés et paies calculables.
           </p>
 
-          <div className="mt-8 grid gap-4 md:grid-cols-2">
+          {loading && (
+            <p className="mt-6 text-sm text-slate-600" role="status" aria-live="polite">
+              Chargement des statistiques…
+            </p>
+          )}
+          {error && (
+            <p className="mt-6 text-sm text-rose-700" role="alert">
+              Erreur lors du chargement des statistiques : {error}
+            </p>
+          )}
+
+          <div className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             {statCards.map((card) => (
               <div
                 key={card.label}
                 className="rounded-[22px] border border-slate-200 bg-slate-50 p-5 shadow-sm"
               >
                 <p className="text-sm text-slate-500">{card.label}</p>
-                <p className={`mt-2 text-3xl font-semibold ${card.color}`}>
-                  {loading ? '—' : card.value}
+                <p className="mt-2 text-3xl font-semibold text-blue-700">
+                  {loading || error ? '—' : card.value}
                 </p>
               </div>
             ))}
           </div>
 
-          <StatChart data={chartData} />
+          {!loading && !error && <StatChart data={chartData} />}
         </main>
       </div>
     </div>

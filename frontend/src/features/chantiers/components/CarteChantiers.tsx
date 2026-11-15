@@ -1,9 +1,12 @@
-import React, { useEffect, useState } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, Circle, useMap, GeoJSON } from 'react-leaflet';
+import { Fragment, useEffect } from 'react';
+import { MapContainer, Marker, Popup, TileLayer, Circle, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
-const defaultIcon = L.icon({
+import type { Chantier } from '../api/chantiers.api';
+import type { Pointage } from '../../pointages/types';
+
+const markerIcon = new L.Icon({
   iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
   iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
   shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
@@ -13,138 +16,117 @@ const defaultIcon = L.icon({
   shadowSize: [41, 41],
 });
 
-const MADAGASCAR_CENTER: [number, number] = [-18.7669, 46.8691];
-const MADAGASCAR_GEOJSON_URL = 'https://raw.githubusercontent.com/datasets/geo-countries/master/data/countries.geojson';
+const pointageIcon = new L.Icon({
+  iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+  iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+  shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+  iconSize: [18, 30],
+  iconAnchor: [9, 30],
+  popupAnchor: [1, -26],
+  shadowSize: [30, 30],
+});
 
-function MadagascarBoundary() {
+const horsZoneIcon = new L.Icon({
+  iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-red.png',
+  iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+  shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+  iconSize: [18, 30],
+  iconAnchor: [9, 30],
+  popupAnchor: [1, -26],
+  shadowSize: [30, 30],
+});
+
+const madagascarCenter: [number, number] = [-18.9, 46.7];
+
+function RecalculerTailleCarte() {
   const map = useMap();
-  const [madagascarFeature, setMadagascarFeature] = useState<any>(null);
 
   useEffect(() => {
-    let isCancelled = false;
+    const container = map.getContainer();
+    const observer = new ResizeObserver(() => {
+      map.invalidateSize({ pan: false });
+    });
 
-    fetch(MADAGASCAR_GEOJSON_URL)
-      .then((response) => response.json())
-      .then((data) => {
-        if (isCancelled) return;
+    observer.observe(container);
+    map.invalidateSize({ pan: false });
 
-        const feature = (data.features ?? []).find((item: any) => {
-          const name = (item.properties?.ADMIN ?? item.properties?.name ?? item.properties?.NAME ?? '').toString().trim();
-          return name.toLowerCase() === 'madagascar';
-        });
-
-        if (!feature) return;
-
-        setMadagascarFeature(feature);
-
-        const layer = L.geoJSON(feature);
-        const bounds = layer.getBounds();
-
-        if (bounds.isValid()) {
-          map.fitBounds(bounds.pad(0.3));
-        }
-      })
-      .catch(() => {
-        if (!isCancelled) {
-          map.setView(MADAGASCAR_CENTER, 6);
-        }
-      });
-
-    return () => {
-      isCancelled = true;
-    };
+    return () => observer.disconnect();
   }, [map]);
-
-  if (!madagascarFeature) return null;
-
-  return <GeoJSON data={madagascarFeature} style={{ color: '#0f766e', weight: 2, fillColor: '#14b8a6', fillOpacity: 0.14 }} />;
-}
-
-function MapViewport({ chantiers }: { chantiers: { latitude: number; longitude: number }[] }) {
-  const map = useMap();
-
-  useEffect(() => {
-    if (!chantiers.length) {
-      map.setView(MADAGASCAR_CENTER, 6);
-      return;
-    }
-
-    if (chantiers.length === 1) {
-      map.setView([chantiers[0].latitude, chantiers[0].longitude], 9);
-      return;
-    }
-
-    const bounds = L.latLngBounds(chantiers.map((chantier) => [chantier.latitude, chantier.longitude] as [number, number]));
-    map.fitBounds(bounds, { padding: [30, 30] });
-  }, [map, chantiers]);
 
   return null;
 }
 
-interface CarteChantiersProps {
-  chantiers: {
-    id?: string | number;
-    nom: string;
-    latitude: number;
-    longitude: number;
-    rayonToleranceM: number;
-  }[];
-}
+type Props = {
+  chantiers: Chantier[];
+  pointages?: Pointage[];
+};
 
-export default function CarteChantiers({ chantiers }: CarteChantiersProps) {
-  const center = chantiers.length > 0
-    ? [chantiers[0].latitude, chantiers[0].longitude]
-    : MADAGASCAR_CENTER;
+export default function CarteChantiers({ chantiers, pointages = [] }: Props) {
+  const pointagesToShow = pointages.filter((p) => chantiers.some((c) => String(c.id) === String(p.chantierId)));
 
   return (
     <div className="rounded-[24px] border border-slate-200 bg-white p-4 shadow-xl">
-      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="mb-4 flex items-center justify-between">
         <div>
           <h3 className="text-lg font-semibold text-slate-900">Carte des chantiers</h3>
-          <p className="text-sm text-slate-500">Visualisez les chantiers et les zones de tolérance.</p>
-        </div>
-        <div className="flex flex-wrap gap-3 text-sm">
-          <div className="flex items-center gap-2 rounded-full border border-slate-200 bg-emerald-50 px-3 py-2 text-slate-700">
-            <span className="h-2.5 w-2.5 rounded-full bg-emerald-500" /> Zone tolérance
-          </div>
-          <div className="flex items-center gap-2 rounded-full border border-slate-200 bg-rose-50 px-3 py-2 text-slate-700">
-            <span className="inline-block h-2.5 w-2.5 rounded-full border border-rose-500 bg-white" /> Hors zone
-          </div>
+          <p className="text-sm text-slate-500">Visualisez la position et la zone de tolérance de chaque chantier.</p>
         </div>
       </div>
 
-      <div className="h-[520px] w-full overflow-hidden rounded-[20px] border border-slate-200">
-        <MapContainer center={center as [number, number]} zoom={chantiers.length > 0 ? 8 : 6} scrollWheelZoom={false} className="h-full w-full">
-          <MadagascarBoundary />
-          <MapViewport chantiers={chantiers} />
+      <div className="h-[420px] w-full overflow-hidden rounded-[20px] border border-slate-200">
+        <MapContainer
+          center={madagascarCenter}
+          zoom={5}
+          minZoom={5}
+          className="h-full w-full"
+          scrollWheelZoom={false}
+        >
+          <RecalculerTailleCarte />
           <TileLayer
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
+
           {chantiers.map((chantier) => (
-            <React.Fragment key={String(chantier.id ?? `${chantier.latitude}-${chantier.longitude}`)}>
-              <Marker position={[chantier.latitude, chantier.longitude]} icon={defaultIcon}>
+            <Fragment key={String(chantier.id)}>
+              <Marker position={[chantier.latitude, chantier.longitude]} icon={markerIcon}>
                 <Popup>
-                  <div className="space-y-1 text-sm text-slate-900">
+                  <div className="space-y-1">
                     <p className="font-semibold">{chantier.nom}</p>
-                    <p>Latitude: {chantier.latitude}</p>
-                    <p>Longitude: {chantier.longitude}</p>
-                    <p>Rayon tolérance: {chantier.rayonToleranceM} m</p>
+                    <p className="text-sm text-slate-600">Latitude: {chantier.latitude}</p>
+                    <p className="text-sm text-slate-600">Longitude: {chantier.longitude}</p>
+                    <p className="text-sm text-slate-600">Tolérance: {chantier.rayonToleranceM} m</p>
                   </div>
                 </Popup>
               </Marker>
               <Circle
                 center={[chantier.latitude, chantier.longitude]}
                 radius={chantier.rayonToleranceM}
-                pathOptions={{ color: '#22c55e', fillColor: '#86efac', fillOpacity: 0.18 }}
+                pathOptions={{ color: '#16a34a', fillColor: '#a7f3d0', fillOpacity: 0.2 }}
               />
-              <Circle
-                center={[chantier.latitude, chantier.longitude]}
-                radius={chantier.rayonToleranceM}
-                pathOptions={{ color: '#ef4444', weight: 2, fillOpacity: 0, dashArray: '8 6' }}
-              />
-            </React.Fragment>
+            </Fragment>
           ))}
+
+          {pointagesToShow.map((pointage) => {
+            const position = [pointage.latitude, pointage.longitude] as [number, number];
+            const chantier = chantiers.find((c) => String(c.id) === String(pointage.chantierId));
+            const icon = pointage.alertHorsZone ? horsZoneIcon : pointageIcon;
+
+            return (
+              <Marker key={String(pointage.id)} position={position} icon={icon}>
+                <Popup>
+                  <div className="space-y-1">
+                    <p className="font-semibold">Pointage {pointage.status}</p>
+                    <p className="text-sm text-slate-600">Employé ID: {pointage.employeId}</p>
+                    <p className="text-sm text-slate-600">Chantier: {chantier?.nom || pointage.chantierId}</p>
+                    <p className="text-sm text-slate-600">Latitude: {pointage.latitude}</p>
+                    <p className="text-sm text-slate-600">Longitude: {pointage.longitude}</p>
+                    <p className="text-sm text-slate-600">Hors zone: {pointage.alertHorsZone ? 'Oui' : 'Non'}</p>
+                  </div>
+                </Popup>
+              </Marker>
+            );
+          })}
         </MapContainer>
       </div>
     </div>

@@ -2,18 +2,14 @@ import React, { useState } from 'react';
 import FenetreModale from '../../../shared/components/FenetreModale';
 import FormulaireChantier from './FormulaireChantier';
 import Sidebar from '../../../shared/components/Sidebar';
-import useChantiers from '../hooks/useChantiers';
 import CarteChantiers from './CarteChantiers';
-import { useAuth } from '../../auth/context/auth-context';
-import Pagination from '../../../shared/components/Pagination';
-import usePagination from '../../../shared/hooks/usePagination';
+import useChantiers from '../hooks/useChantiers';
+import usePointages from '../../pointages/hooks/usePointages';
 
 export default function TableauChantiers() {
 	const { chantiers, loading, error, create, update, remove } = useChantiers();
-	const pagination = usePagination(chantiers);
-	// EMPLOYE : consultation seule (ajout, modification et suppression masqués).
-	const { utilisateur } = useAuth();
-	const lectureSeule = utilisateur?.role !== 'ADMIN';
+	const { pointages } = usePointages();
+	const horsZoneCount = pointages.filter((p) => p.alertHorsZone).length;
 	const [editing, setEditing] = useState<any>(null);
 	const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -46,25 +42,21 @@ export default function TableauChantiers() {
 		<div className="min-h-screen bg-[#eef2ff] px-4 py-6 text-slate-900 md:px-6 lg:px-8">
 			<div className="mx-auto flex w-full flex-col gap-6 lg:flex-row">
 				<Sidebar />
-				<main id="contenu" tabIndex={-1} className="flex-1 min-w-0 focus:outline-none lg:ml-80 space-y-6">
+				<main className="flex-1 lg:ml-80 space-y-6">
 					<div className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-xl">
 						<div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
 							<div>
 								<p className="text-sm font-semibold uppercase tracking-[0.3em] text-blue-600">Dashboard</p>
-								<h1 className="mt-2 text-2xl font-semibold text-slate-900">Gestion des chantiers</h1>
-								<p className="mt-1 text-sm text-slate-500">
-									{lectureSeule ? 'Consultation des chantiers.' : 'Liste, ajout, modification et suppression des chantiers.'}
-								</p>
+								<h2 className="mt-2 text-2xl font-semibold text-slate-900">Gestion des chantiers</h2>
+								<p className="mt-1 text-sm text-slate-500">Liste, ajout, modification et suppression des chantiers.</p>
 							</div>
-							{!lectureSeule && (
-								<button
-									type="button"
-									className="rounded-full bg-emerald-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-emerald-800"
-									onClick={() => openModal(null)}
-								>
-									+ Ajouter un chantier
-								</button>
-							)}
+							<button
+								type="button"
+								className="rounded-full bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-emerald-500"
+								onClick={() => openModal(null)}
+							>
+								+ Ajouter un chantier
+							</button>
 						</div>
 					</div>
 
@@ -80,99 +72,68 @@ export default function TableauChantiers() {
 							<p className="mt-1 text-2xl font-semibold text-slate-900">{loading ? '—' : chantiers.length}</p>
 						</div>
 						<div className="rounded-[22px] border border-slate-200 bg-slate-50 p-4 shadow-sm">
-							<p className="text-sm text-slate-500">En cours</p>
-							<p className="mt-1 text-2xl font-semibold text-slate-900">0</p>
+							<p className="text-sm text-slate-500">Pointages</p>
+							<p className="mt-1 text-2xl font-semibold text-slate-900">{pointages.length}</p>
 						</div>
 						<div className="rounded-[22px] border border-slate-200 bg-slate-50 p-4 shadow-sm">
-							<p className="text-sm text-slate-500">{lectureSeule ? 'Accès' : 'Action rapide'}</p>
-							<p className="mt-1 text-2xl font-semibold text-slate-900">{lectureSeule ? 'Lecture seule' : 'CRUD'}</p>
+							<p className="text-sm text-slate-500">Alertes hors zone</p>
+							<p className="mt-1 text-2xl font-semibold text-slate-900">{horsZoneCount}</p>
 						</div>
 					</div>
+
+					<CarteChantiers chantiers={chantiers} pointages={pointages} />
 
 					<div className="rounded-[24px] border border-slate-200 bg-white p-4 shadow-xl">
 						<div className="mb-4 flex items-center justify-between">
 							<div>
 								<h3 className="text-lg font-semibold text-slate-900">Liste des chantiers</h3>
-								<p className="text-sm text-slate-500">
-									{lectureSeule ? 'Consultez la liste et la carte des chantiers.' : 'Consultez, modifiez ou supprimez un chantier en un clic.'}
-								</p>
+								<p className="text-sm text-slate-500">Consultez, modifiez ou supprimez un chantier en un clic.</p>
 							</div>
 							
 						</div>
 
 						{loading ? (
-							<div role="status" aria-live="polite" className="py-8 text-center text-slate-500">Chargement...</div>
+							<div className="py-8 text-center text-slate-500">Chargement...</div>
 						) : (
-							<>
-							<div className="overflow-x-auto rounded-[20px] border border-slate-200 bg-white shadow-lg">
+							<div className="overflow-hidden rounded-[20px] border border-slate-200 bg-white shadow-lg">
 								<table className="min-w-full divide-y divide-slate-200">
 									<thead className="bg-slate-100">
 										<tr>
-											<th scope="col" className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Nom</th>
-											<th scope="col" className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Latitude</th>
-											<th scope="col" className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Longitude</th>
-											<th scope="col" className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Rayon Tolérance (m)</th>
-											{!lectureSeule && <th scope="col" className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Actions</th>}
+											<th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Nom</th>
+											<th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Latitude</th>
+											<th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Longitude</th>
+											<th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Rayon Tolérance (m)</th>
+											<th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Actions</th>
 										</tr>
 									</thead>
 									<tbody className="divide-y divide-slate-200">
 										{chantiers.length === 0 ? (
 											<tr>
-												<td colSpan={lectureSeule ? 4 : 5} className="px-4 py-8 text-center text-sm text-slate-500">
+												<td colSpan={5} className="px-4 py-8 text-center text-sm text-slate-500">
 													Aucun chantier enregistré pour le moment.
 												</td>
 											</tr>
-										) : pagination.elementsPage.map(c => (
+										) : chantiers.map(c => (
 											<tr key={String(c.id)} className="hover:bg-slate-50">
 												<td className="px-4 py-3 text-sm text-slate-700">{c.nom}</td>
 												<td className="px-4 py-3 text-sm text-slate-500">{c.latitude ?? '—'}</td>
 												<td className="px-4 py-3 text-sm text-slate-500">{c.longitude ?? '—'}</td>
 												<td className="px-4 py-3 text-sm text-slate-500">{c.rayonToleranceM ?? '—'}</td>
-												{!lectureSeule && (
-													<td className="px-4 py-3 text-sm">
-														<button className="mr-2 rounded-md border border-slate-300 px-2 py-1 text-slate-700 transition hover:bg-slate-100" onClick={() => openModal(c)}>Éditer</button>
-														<button className="rounded-md border border-rose-300 px-2 py-1 text-rose-600 transition hover:bg-rose-50" onClick={() => handleDelete(c.id!, c.nom)}>Supprimer</button>
-													</td>
-												)}
+												<td className="px-4 py-3 text-sm">
+													<button className="mr-2 rounded-md border border-slate-300 px-2 py-1 text-slate-700 transition hover:bg-slate-100" onClick={() => openModal(c)}>Éditer</button>
+													<button className="rounded-md border border-rose-300 px-2 py-1 text-rose-600 transition hover:bg-rose-50" onClick={() => handleDelete(c.id!, c.nom)}>Supprimer</button>
+												</td>
 											</tr>
 										))}
 									</tbody>
 								</table>
 							</div>
-							<Pagination
-								page={pagination.page}
-								totalPages={pagination.totalPages}
-								total={pagination.total}
-								premier={pagination.premier}
-								dernier={pagination.dernier}
-								taille={pagination.taille}
-								onPageChange={pagination.setPage}
-								onTailleChange={pagination.setTaille}
-								libelle="chantiers"
-							/>
-							</>
 						)}
-					</div>
-
-					<div className="grid gap-4 xl:grid-cols-[1fr_420px]">
-						<div className="rounded-[24px] border border-slate-200 bg-white p-4 shadow-xl">
-							<div className="flex items-center justify-between gap-3">
-								<div>
-									<h3 className="text-lg font-semibold text-slate-900">Détails du chantier</h3>
-									<p className="text-sm text-slate-500">Sélectionnez un chantier pour voir son emplacement et sa zone.</p>
-								</div>
-							</div>
-							<div className="mt-4 space-y-3 text-sm text-slate-700">
-								<p>Choisissez un chantier dans le tableau pour le modifier ou consultez la carte à droite.</p>
-								<p className="font-medium">Le plan s'ajuste automatiquement selon les coordonnées enregistrées.</p>
-							</div>
-						</div>
-						<CarteChantiers chantiers={chantiers} />
 					</div>
 				</main>
 			</div>
 
-			<FenetreModale open={isModalOpen} onClose={closeModal} title={editing ? 'Modifier un chantier' : 'Ajouter un chantier'}>
+			<FenetreModale open={isModalOpen} onClose={closeModal} title={editing?.id ? 'Modifier un chantier' : 'Ajouter un chantier'}>
 				<FormulaireChantier edit={editing} onSubmit={addOrUpdateChantier} onCancel={closeModal} />
 			</FenetreModale>
 		</div>
