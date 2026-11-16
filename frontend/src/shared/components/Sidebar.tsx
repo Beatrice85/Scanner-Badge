@@ -7,7 +7,7 @@ import type { Role } from '../../features/auth/types';
 // Icônes (SVG en ligne, trait 1.8, 20 px). Décoratives : aria-hidden, le libellé
 // texte reste toujours affiché (reconnaissance plutôt que rappel).
 // ---------------------------------------------------------------------------
-type NomIcone = 'tableau' | 'chantier' | 'employe' | 'badge' | 'pointage' | 'conge' | 'utilisateurs' | 'sortie' | 'menu' | 'fermer' | 'marque';
+type NomIcone = 'tableau' | 'chantier' | 'employe' | 'badge' | 'pointage' | 'conge' | 'paie' | 'utilisateurs' | 'sortie' | 'menu' | 'fermer' | 'marque';
 
 const TRACES: Record<NomIcone, ReactNode> = {
   tableau: <><rect x="3" y="3" width="7" height="9" rx="1.5" /><rect x="14" y="3" width="7" height="5" rx="1.5" /><rect x="14" y="12" width="7" height="9" rx="1.5" /><rect x="3" y="16" width="7" height="5" rx="1.5" /></>,
@@ -16,6 +16,7 @@ const TRACES: Record<NomIcone, ReactNode> = {
   badge: <><rect x="4" y="3" width="16" height="18" rx="2.5" /><circle cx="12" cy="10" r="2.5" /><path d="M8 17c.6-1.8 2.1-2.8 4-2.8s3.4 1 4 2.8" /><path d="M10 6h4" /></>,
   pointage: <><circle cx="12" cy="12" r="8.5" /><path d="M12 7.5V12l3 2" /></>,
   conge: <><rect x="3.5" y="5" width="17" height="15.5" rx="2" /><path d="M3.5 10h17" /><path d="M8 3v4M16 3v4" /><path d="m9 15 2 2 4-4" /></>,
+  paie: <><rect x="3" y="5" width="18" height="14" rx="2" /><path d="M3 10h18" /><path d="M7 15h3M16 15h1" /></>,
   utilisateurs: <><circle cx="12" cy="8" r="3.5" /><path d="M5 20c.9-3.6 3.6-5.5 7-5.5s6.1 1.9 7 5.5" /><path d="M18.5 4.5 20 6l2.5-2.5" /></>,
   sortie: <><path d="M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4" /><path d="M10 16l-4-4 4-4" /><path d="M6 12h10" /></>,
   menu: <><path d="M4 7h16M4 12h16M4 17h16" /></>,
@@ -59,10 +60,10 @@ const RUBRIQUES: { titre: string; titreEmploye?: string; liens: Lien[] }[] = [
   },
   {
     titre: 'Ressources humaines',
+    titreEmploye: 'Ressources',
     liens: [
       { to: '/conges', label: 'Congés', icone: 'conge', roles: ['ADMIN'] },
-      // À réactiver quand la page et la route /paie seront créées côté frontend.
-      // { to: '/paie', label: 'Paies', icone: 'paie', roles: ['ADMIN', 'EMPLOYE'] },
+      { to: '/paie', label: 'Paie', labelEmploye: 'Ma fiche de paie', icone: 'paie', roles: ['ADMIN', 'EMPLOYE'] },
     ],
   },
   {

@@ -12,6 +12,7 @@ import BadgeAssociation from '../features/badges/components/BadgeAssociation';
 import ListeConges from '../features/conges/components/ListeConges';
 import AccesRefuse from '../features/auth/components/AccesRefuse';
 import PageUtilisateurs from '../features/users/components/PageUtilisateurs';
+import ListePaie from '../features/paie/components/ListePaie';
 
 export default function RouteurApp() {
   return (
@@ -77,6 +78,14 @@ export default function RouteurApp() {
           element={
             <RouteProtegee role="ADMIN">
               <PageUtilisateurs />
+            </RouteProtegee>
+          }
+        />
+        <Route
+          path="/paie"
+          element={
+            <RouteProtegee>
+              <ListePaie />
             </RouteProtegee>
           }
         />

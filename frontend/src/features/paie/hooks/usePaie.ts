@@ -16,9 +16,9 @@ export default function usePaie() {
 			const data = await paieApi.calculer(employeId, dateDebut, dateFin);
 			setResultat(data);
 			return data;
-		} catch (err: any) {
+		} catch (err: unknown) {
 			setResultat(null);
-			setError(err?.message || 'Erreur');
+			setError(err instanceof Error ? err.message : 'Erreur lors du calcul de la paie.');
 			return null;
 		} finally {
 			setLoading(false);
