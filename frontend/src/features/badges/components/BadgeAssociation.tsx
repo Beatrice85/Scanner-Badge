@@ -103,7 +103,7 @@ export default function BadgeAssociation() {
                       <tr key={String(e.id)} className="hover:bg-slate-50">
                         <td className="px-4 py-3 text-sm text-slate-700">{e.badgeId || e.badge?.uid}</td>
                         <td className="px-4 py-3 text-sm text-slate-700">{`${e.nom} ${e.prenom}`}</td>
-                        <td className="px-4 py-3 text-sm text-slate-500">{chantierMap[e.chantierId] || e.chantierId || '—'}</td>
+                        <td className="px-4 py-3 text-sm text-slate-500">{(e.chantierId && chantierMap[e.chantierId]) || e.chantierId || 'Non affecté'}</td>
                       </tr>
                     ))}
                   </tbody>

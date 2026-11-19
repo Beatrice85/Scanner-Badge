@@ -9,6 +9,9 @@ import usePagination from '../../../shared/hooks/usePagination';
 
 export default function TableauEmployes() {
 	const { employes, loading, error, create, update, remove } = useEmployes();
+	// Indicateurs calculés à partir de la liste (aucune valeur en dur)
+	const avecBadge = employes.filter(e => Boolean(e.badge?.uid || e.badgeId)).length;
+	const sansChantier = employes.filter(e => !e.chantierId).length;
 	const pagination = usePagination(employes);
 	const [chantiers, setChantiers] = React.useState<Chantier[]>([]);
 	const [chantierMap, setChantierMap] = React.useState<Record<string, string>>({});
@@ -85,12 +88,15 @@ export default function TableauEmployes() {
 							<p className="mt-1 text-2xl font-semibold text-slate-900">{loading ? '—' : employes.length}</p>
 						</div>
 						<div className="rounded-bloc border border-slate-200 bg-slate-50 p-4 shadow-sm">
-							<p className="text-sm text-slate-500">À valider</p>
-							<p className="mt-1 text-2xl font-semibold text-slate-900">0</p>
+							<p className="text-sm text-slate-500">Avec badge</p>
+							<p className="mt-1 text-2xl font-semibold text-slate-900">{loading ? '—' : avecBadge}</p>
 						</div>
 						<div className="rounded-bloc border border-slate-200 bg-slate-50 p-4 shadow-sm">
-							<p className="text-sm text-slate-500">Action rapide</p>
-							<p className="mt-1 text-2xl font-semibold text-slate-900">CRUD</p>
+							<p className="text-sm text-slate-500">Sans chantier</p>
+							<p className="mt-1 text-2xl font-semibold text-slate-900">{loading ? '—' : sansChantier}</p>
+							{!loading && sansChantier > 0 && (
+								<p className="mt-1 text-xs text-amber-700">Pointages impossibles tant qu'un chantier n'est pas affecté.</p>
+							)}
 						</div>
 					</div>
 
@@ -134,7 +140,7 @@ export default function TableauEmployes() {
 												<td className="px-4 py-3 text-sm text-slate-500">{e.badge?.uid || e.badgeId || '—'}</td>
 												<td className="px-4 py-3 text-sm text-slate-500">{e.tauxHoraire ?? '—'}</td>
 												<td className="px-4 py-3 text-sm text-slate-500">{e.volumeMensuelObligatoire ?? '—'}</td>
-												<td className="px-4 py-3 text-sm text-slate-500">{chantierMap[e.chantierId] || e.chantierId || '—'}</td>
+												<td className="px-4 py-3 text-sm text-slate-500">{(e.chantierId && chantierMap[e.chantierId]) || e.chantierId || 'Non affecté'}</td>
 												<td className="px-4 py-3 text-sm">
 													<button className="mr-2 rounded-full border border-slate-300 px-3 py-1 font-medium text-slate-700 transition hover:bg-slate-100" onClick={() => openModal(e)}>Éditer</button>
 													<button className="rounded-full border border-rose-300 px-3 py-1 font-medium text-rose-600 transition hover:bg-rose-50" onClick={() => handleDelete(e.id!, `${e.prenom} ${e.nom}`.trim())}>Supprimer</button>

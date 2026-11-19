@@ -10,7 +10,10 @@ export type Employee = {
 	} | null;
 	tauxHoraire: number;
 	volumeMensuelObligatoire: number;
-	chantierId: string;
+	// null pour une fiche créée automatiquement à l'inscription (pas encore affectée)
+	chantierId: string | null;
+	// Sert à lier automatiquement un compte EMPLOYE à sa fiche
+	email?: string | null;
 };
 
 export const employesApi = {
