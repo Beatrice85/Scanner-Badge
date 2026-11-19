@@ -1,20 +1,12 @@
 import { Fragment, useEffect, useMemo } from 'react';
 import { MapContainer, Marker, Popup, TileLayer, Circle, useMap } from 'react-leaflet';
-import L, { type LatLngBoundsExpression, type LatLngTuple } from 'leaflet';
+import L, { type LatLngTuple } from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
 import type { Chantier } from '../api/chantiers.api';
 import type { Pointage } from '../../pointages/types';
-
-const markerIcon = new L.Icon({
-  iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
-  iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
-  shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41],
-});
+import { LIMITES_TOAMASINA, TOAMASINA_BOUNDS, TOAMASINA_CENTRE, TOAMASINA_ZOOM, iconeChantier } from '../carte';
+import RecalculerTailleCarte from './RecalculerTailleCarte';
 
 const pointageIcon = new L.Icon({
   iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
@@ -36,17 +28,11 @@ const horsZoneIcon = new L.Icon({
   shadowSize: [30, 30],
 });
 
-// Vue limitée à la ville de Toamasina
-const TOAMASINA_CENTRE: LatLngTuple = [-18.1443, 49.4023];
-const TOAMASINA_ZOOM = 13;
-const TOAMASINA_BOUNDS: LatLngBoundsExpression = [[-18.2, 49.34], [-18.08, 49.46]]; // [sud-ouest, nord-est]
-const limitesToamasina = L.latLngBounds(TOAMASINA_BOUNDS);
-
 // Coordonnées valides et situées dans les limites de Toamasina
 function dansToamasina(latitude: unknown, longitude: unknown): boolean {
   const lat = Number(latitude);
   const lng = Number(longitude);
-  return latitude != null && longitude != null && Number.isFinite(lat) && Number.isFinite(lng) && limitesToamasina.contains([lat, lng]);
+  return latitude != null && longitude != null && Number.isFinite(lat) && Number.isFinite(lng) && LIMITES_TOAMASINA.contains([lat, lng]);
 }
 
 // Cadre la vue sur les chantiers de Toamasina (ou sur le centre-ville s'il n'y en a pas).
@@ -63,24 +49,6 @@ function AjusterVue({ positions }: { positions: LatLngTuple[] }) {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [map, cle]);
-
-  return null;
-}
-
-function RecalculerTailleCarte() {
-  const map = useMap();
-
-  useEffect(() => {
-    const container = map.getContainer();
-    const observer = new ResizeObserver(() => {
-      map.invalidateSize({ pan: false });
-    });
-
-    observer.observe(container);
-    map.invalidateSize({ pan: false });
-
-    return () => observer.disconnect();
-  }, [map]);
 
   return null;
 }
@@ -135,7 +103,7 @@ export default function CarteChantiers({ chantiers, pointages = [] }: Props) {
 
           {chantiersCarte.map((chantier) => (
             <Fragment key={String(chantier.id)}>
-              <Marker position={[chantier.latitude, chantier.longitude]} icon={markerIcon}>
+              <Marker position={[chantier.latitude, chantier.longitude]} icon={iconeChantier}>
                 <Popup>
                   <div className="space-y-1">
                     <p className="font-semibold">{chantier.nom}</p>
