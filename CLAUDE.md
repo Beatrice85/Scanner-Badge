@@ -98,6 +98,11 @@ Target: WCAG 2.1 level AA. Keep the existing color code and don't introduce new 
   - **load error**: `<EtatErreur message onReessayer={fetchAll} />`, shown **in place of the table**, never above an empty table;
   - **empty**: `<EtatVide titre description action? positif? />`, which explains why it is empty and offers the next action, hidden for read-only roles.
   - The banner at the top of a page is reserved for action errors (`actionError`).
+- **Never use `window.confirm` or `window.alert`.** Use `const { confirmer, fenetreConfirmation } = useConfirmation()` (`shared/hooks/`):
+  - `if (!(await confirmer({ titre, message, libelleConfirmer, danger }))) return;`
+  - render `{fenetreConfirmation}` in the page.
+  - The message names the item concerned and the consequence. Escape or "Annuler" returns `false`.
+- **A form shown in a modal has no title of its own:** the `title` of `FenetreModale` is enough. Keep only the short explanatory sentence.
 - `FenetreModale` is an accessible dialog: it handles `role="dialog"`, the focus trap, Escape and focus return, so reuse it for any new modal.
 - `Sidebar` is responsive. On small screens it is a top bar with a "Menu" button (`aria-expanded`) that opens a side panel. From `lg` up it is a fixed card (`lg:left-4 lg:w-72`), and pages keep `lg:ml-80`.
   - Links are left-aligned, each with a decorative SVG icon (`aria-hidden`), and grouped into sections. The ADMIN sees Général, Gestion, Ressources humaines and Administration; the EMPLOYE sees Mon espace and Consultation.

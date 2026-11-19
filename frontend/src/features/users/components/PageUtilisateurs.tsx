@@ -14,6 +14,7 @@ import type { Employee } from '../../employes/api/employes.api';
 import SqueletteTableau from '../../../shared/components/SqueletteTableau';
 import EtatVide from '../../../shared/components/EtatVide';
 import EtatErreur from '../../../shared/components/EtatErreur';
+import useConfirmation from '../../../shared/hooks/useConfirmation';
 
 const LIBELLES_ROLE: Record<Role, string> = { ADMIN: 'Administrateur', EMPLOYE: 'Employé' };
 
@@ -28,6 +29,7 @@ export default function PageUtilisateurs() {
 	const { utilisateur: moi } = useAuth();
 	const { utilisateurs, loading, error, fetchAll, changerRole, associerEmploye } = useUtilisateurs();
 	const pagination = usePagination(utilisateurs);
+	const { confirmer, fenetreConfirmation } = useConfirmation();
 	const { employes } = useEmployes();
 
 	const [enCours, setEnCours] = useState<string | null>(null);
@@ -82,9 +84,11 @@ export default function PageUtilisateurs() {
 
 	async function handleChangerRole(compte: CompteUtilisateur) {
 		const nouveauRole: Role = compte.role === 'ADMIN' ? 'EMPLOYE' : 'ADMIN';
-		const confirmed = window.confirm(
-			`Passer ${compte.nom} (${compte.email}) au rôle « ${LIBELLES_ROLE[nouveauRole]} » ?`,
-		);
+		const confirmed = await confirmer({
+			titre: 'Changer le rôle ?',
+			message: <><strong className="text-white">{compte.nom}</strong> ({compte.email}) passera au rôle « {LIBELLES_ROLE[nouveauRole]} ».</>,
+			libelleConfirmer: 'Changer le rôle',
+		});
 		if (!confirmed) return;
 
 		setActionError(null);
@@ -227,6 +231,7 @@ export default function PageUtilisateurs() {
 					</div>
 				</main>
 			</div>
+			{fenetreConfirmation}
 			<FenetreModale
 				open={compteAAssocier !== null}
 				onClose={() => {

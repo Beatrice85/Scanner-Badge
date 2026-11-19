@@ -13,6 +13,7 @@ import usePagination from '../../../shared/hooks/usePagination';
 import SqueletteTableau from '../../../shared/components/SqueletteTableau';
 import EtatVide from '../../../shared/components/EtatVide';
 import EtatErreur from '../../../shared/components/EtatErreur';
+import useConfirmation from '../../../shared/hooks/useConfirmation';
 
 const FILTRES: { valeur: StatutConge | null; libelle: string }[] = [
 	{ valeur: 'EN_ATTENTE', libelle: LIBELLES_STATUT.EN_ATTENTE },
@@ -30,6 +31,7 @@ export default function VueCongesAdmin() {
 	const [statut, setStatut] = useState<StatutConge | null>('EN_ATTENTE');
 	const { conges, loading, error, fetchAll, create, update, remove, valider, refuser } = useConges(statut);
 	const pagination = usePagination(conges, undefined, statut);
+	const { confirmer, fenetreConfirmation } = useConfirmation();
 	const { employes } = useEmployes();
 
 	const [editing, setEditing] = useState<Conge | null>(null);
@@ -71,10 +73,13 @@ export default function VueCongesAdmin() {
 		}
 	}
 
-	function handleDelete(c: Conge) {
-		const confirmed = window.confirm(
-			`Supprimer le congé de ${nomEmploye(c)} du ${formaterDate(c.dateDebut)} au ${formaterDate(c.dateFin)} ?`,
-		);
+	async function handleDelete(c: Conge) {
+		const confirmed = await confirmer({
+			titre: 'Supprimer le congé ?',
+			message: <>Le congé de <strong className="text-white">{nomEmploye(c)}</strong> du {formaterDate(c.dateDebut)} au {formaterDate(c.dateFin)} sera définitivement supprimé.</>,
+			libelleConfirmer: 'Supprimer',
+			danger: true,
+		});
 		if (confirmed) executer(c, () => remove(c.id));
 	}
 
@@ -222,6 +227,7 @@ export default function VueCongesAdmin() {
 				)}
 			</div>
 
+			{fenetreConfirmation}
 			<FenetreModale open={formulaireOuvert} onClose={fermerFormulaire} title={editing ? 'Modifier un congé' : 'Créer un congé'}>
 				<FormulaireConge
 					employes={employes}

@@ -10,10 +10,12 @@ import usePagination from '../../../shared/hooks/usePagination';
 import SqueletteTableau from '../../../shared/components/SqueletteTableau';
 import EtatVide from '../../../shared/components/EtatVide';
 import EtatErreur from '../../../shared/components/EtatErreur';
+import useConfirmation from '../../../shared/hooks/useConfirmation';
 
 export default function PointagesDashboard() {
   const { pointages, loading, error, fetchAll, create, update, remove } = usePointages();
   const pagination = usePagination(pointages);
+  const { confirmer, fenetreConfirmation } = useConfirmation();
   const { employes } = useEmployes();
   const { chantiers } = useChantiers();
   const [editing, setEditing] = useState<any>(null);
@@ -55,7 +57,12 @@ export default function PointagesDashboard() {
   }
 
   async function handleDelete(id: string | number) {
-    const confirmed = window.confirm('Supprimer ce pointage ?');
+    const confirmed = await confirmer({
+      titre: 'Supprimer le pointage ?',
+      message: 'Ce pointage sera définitivement supprimé et ne comptera plus dans le calcul de la paie.',
+      libelleConfirmer: 'Supprimer',
+      danger: true,
+    });
     if (!confirmed) return;
     await remove(id);
   }
@@ -152,6 +159,7 @@ export default function PointagesDashboard() {
             )}
           </div>
 
+          {fenetreConfirmation}
           <FenetreModale open={isModalOpen} onClose={closeModal} title={editing?.id ? 'Modifier un pointage' : 'Ajouter un pointage'}>
             <FormulairePointage edit={editing} onSubmit={addOrUpdatePointage} onCancel={closeModal} />
             {formError ? <div className="mt-4 rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">{formError}</div> : null}

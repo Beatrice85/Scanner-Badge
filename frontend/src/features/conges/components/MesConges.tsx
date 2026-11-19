@@ -11,12 +11,14 @@ import usePagination from '../../../shared/hooks/usePagination';
 import SqueletteTableau from '../../../shared/components/SqueletteTableau';
 import EtatVide from '../../../shared/components/EtatVide';
 import EtatErreur from '../../../shared/components/EtatErreur';
+import useConfirmation from '../../../shared/hooks/useConfirmation';
 
 // Vue EMPLOYE : GET /conges/moi. Demande sans choix d'employé ; modification et
 // suppression proposées uniquement pour les congés EN_ATTENTE (le backend le vérifie aussi).
 export default function MesConges() {
 	const { conges, loading, error, compteNonLie, fetchAll, create, update, remove } = useMesConges();
 	const pagination = usePagination(conges);
+	const { confirmer, fenetreConfirmation } = useConfirmation();
 
 	const [editing, setEditing] = useState<Conge | null>(null);
 	const [formulaireOuvert, setFormulaireOuvert] = useState(false);
@@ -43,7 +45,13 @@ export default function MesConges() {
 	}
 
 	async function handleDelete(c: Conge) {
-		const confirmed = window.confirm(`Annuler votre demande du ${formaterDate(c.dateDebut)} au ${formaterDate(c.dateFin)} ?`);
+		const confirmed = await confirmer({
+			titre: 'Annuler votre demande ?',
+			message: <>Votre demande de congé du {formaterDate(c.dateDebut)} au {formaterDate(c.dateFin)} sera supprimée.</>,
+			libelleConfirmer: 'Annuler la demande',
+			libelleAnnuler: 'Garder la demande',
+			danger: true,
+		});
 		if (!confirmed) return;
 		setActionError(null);
 		try {
@@ -157,6 +165,7 @@ export default function MesConges() {
 				)}
 			</div>
 
+			{fenetreConfirmation}
 			<FenetreModale open={formulaireOuvert} onClose={fermerFormulaire} title={editing ? 'Modifier ma demande' : 'Demander un congé'}>
 				<FormulaireConge edit={editing} onCreate={handleCreate} onUpdate={handleUpdate} onCancel={fermerFormulaire} />
 			</FenetreModale>

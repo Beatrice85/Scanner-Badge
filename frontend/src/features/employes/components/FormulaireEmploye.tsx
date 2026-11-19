@@ -59,8 +59,7 @@ export default function FormulaireEmploye({ edit, onSubmit, onCancel }: Props) {
 	return (
 		<form onSubmit={handleSubmit} className="rounded-carte border border-white/10 bg-slate-900/70 p-5 shadow-2xl backdrop-blur-xl">
 			<div className="mb-4">
-				<h3 className="text-lg font-semibold text-white">{isEditing ? 'Modifier un employé' : 'Ajouter un employé'}</h3>
-				<p className="mt-1 text-sm text-slate-400">{isEditing ? 'Mettez à jour les informations de l\'employé.' : 'Ajoutez un nouvel employé à votre équipe.'}</p>
+				<p className="text-sm text-slate-300">{isEditing ? 'Mettez à jour les informations de l\'employé.' : 'Ajoutez un nouvel employé à votre équipe.'}</p>
 			</div>
 
 			<div className="space-y-3">

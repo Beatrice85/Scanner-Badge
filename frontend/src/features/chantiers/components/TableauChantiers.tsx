@@ -11,10 +11,12 @@ import usePagination from '../../../shared/hooks/usePagination';
 import SqueletteTableau from '../../../shared/components/SqueletteTableau';
 import EtatVide from '../../../shared/components/EtatVide';
 import EtatErreur from '../../../shared/components/EtatErreur';
+import useConfirmation from '../../../shared/hooks/useConfirmation';
 
 export default function TableauChantiers() {
 	const { chantiers, loading, error, fetchAll, create, update, remove } = useChantiers();
 	const pagination = usePagination(chantiers);
+	const { confirmer, fenetreConfirmation } = useConfirmation();
 	const { pointages } = usePointages();
 	const horsZoneCount = pointages.filter((p) => p.alertHorsZone).length;
 	// EMPLOYE : consultation seule (ajout, modification et suppression masqués).
@@ -44,7 +46,12 @@ export default function TableauChantiers() {
 	}
 
 	async function handleDelete(id: string | number, name: string) {
-		const confirmed = window.confirm(`Supprimer ${name} ?`);
+		const confirmed = await confirmer({
+			titre: 'Supprimer le chantier ?',
+			message: <>Le chantier <strong className="text-white">{name}</strong> sera définitivement supprimé. Cette action est irréversible.</>,
+			libelleConfirmer: 'Supprimer',
+			danger: true,
+		});
 		if (!confirmed) return;
 		await remove(id);
 	}
@@ -170,6 +177,7 @@ export default function TableauChantiers() {
 				</main>
 			</div>
 
+			{fenetreConfirmation}
 			{!lectureSeule && (
 				<FenetreModale open={isModalOpen} onClose={closeModal} title={editing?.id ? 'Modifier un chantier' : 'Ajouter un chantier'}>
 					<FormulaireChantier edit={editing} onSubmit={addOrUpdateChantier} onCancel={closeModal} />

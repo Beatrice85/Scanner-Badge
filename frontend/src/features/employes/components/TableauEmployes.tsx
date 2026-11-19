@@ -9,6 +9,7 @@ import usePagination from '../../../shared/hooks/usePagination';
 import SqueletteTableau from '../../../shared/components/SqueletteTableau';
 import EtatVide from '../../../shared/components/EtatVide';
 import EtatErreur from '../../../shared/components/EtatErreur';
+import useConfirmation from '../../../shared/hooks/useConfirmation';
 
 export default function TableauEmployes() {
 	const { employes, loading, error, fetchAll, create, update, remove } = useEmployes();
@@ -16,6 +17,7 @@ export default function TableauEmployes() {
 	const avecBadge = employes.filter(e => Boolean(e.badge?.uid || e.badgeId)).length;
 	const sansChantier = employes.filter(e => !e.chantierId).length;
 	const pagination = usePagination(employes);
+	const { confirmer, fenetreConfirmation } = useConfirmation();
 	const [chantiers, setChantiers] = React.useState<Chantier[]>([]);
 	const [chantierMap, setChantierMap] = React.useState<Record<string, string>>({});
 
@@ -52,7 +54,12 @@ export default function TableauEmployes() {
 	}
 
 	async function handleDelete(id: string | number, name: string) {
-		const confirmed = window.confirm(`Supprimer ${name} ?`);
+		const confirmed = await confirmer({
+			titre: 'Supprimer l’employé ?',
+			message: <>La fiche de <strong className="text-white">{name}</strong> sera définitivement supprimée. Cette action est irréversible.</>,
+			libelleConfirmer: 'Supprimer',
+			danger: true,
+		});
 		if (!confirmed) return;
 		await remove(id);
 	}
@@ -171,6 +178,7 @@ export default function TableauEmployes() {
 				</main>
 			</div>
 
+			{fenetreConfirmation}
 			<FenetreModale open={isModalOpen} onClose={closeModal} title={editing?.id ? 'Modifier un employé' : 'Ajouter un employé'}>
 				<FormulaireEmploye edit={editing} onSubmit={addOrUpdateEmployee} onCancel={closeModal} />
 			</FenetreModale>
