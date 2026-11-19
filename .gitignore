@@ -1,0 +1,8 @@
+# Secrets : ne jamais commiter
+supabase.txt
+/supabase
+.env
+.env.*
+!.env.example
+*.pem
+*.key
