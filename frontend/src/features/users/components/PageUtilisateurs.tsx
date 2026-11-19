@@ -100,7 +100,7 @@ export default function PageUtilisateurs() {
 			<div className="mx-auto flex w-full flex-col gap-6 lg:flex-row lg:pt-24">
 				<Sidebar />
 				<main id="contenu" tabIndex={-1} className="flex-1 min-w-0 focus:outline-none lg:ml-80 space-y-6">
-					<div className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-xl">
+					<div className="rounded-carte border border-slate-200 bg-white p-6 shadow-xl">
 						<p className="text-sm font-semibold uppercase tracking-[0.3em] text-blue-600">Dashboard</p>
 						<h1 className="mt-2 text-2xl font-semibold text-slate-900">Utilisateurs</h1>
 						<p className="mt-1 text-sm text-slate-500">
@@ -109,17 +109,17 @@ export default function PageUtilisateurs() {
 					</div>
 
 					{(error || actionError) && (
-						<div role="alert" className="rounded-[22px] border border-rose-300 bg-rose-50 p-4 text-rose-700">
+						<div role="alert" className="rounded-bloc border border-rose-300 bg-rose-50 p-4 text-rose-700">
 							{actionError || error}
 						</div>
 					)}
 
-					<div className="rounded-[24px] border border-slate-200 bg-white p-4 shadow-xl">
+					<div className="rounded-carte border border-slate-200 bg-white p-4 shadow-xl">
 						{loading ? (
 							<div role="status" aria-live="polite" className="py-8 text-center text-slate-500">Chargement...</div>
 						) : (
 							<>
-							<div className="overflow-x-auto rounded-[20px] border border-slate-200 bg-white shadow-lg">
+							<div className="overflow-x-auto rounded-bloc border border-slate-200 bg-white shadow-lg">
 								<table className="min-w-full divide-y divide-slate-200">
 									<thead className="bg-slate-100">
 										<tr>
@@ -182,7 +182,7 @@ export default function PageUtilisateurs() {
 																	type="button"
 																	disabled={associationEnCours || enCours === u.id}
 																	onClick={() => ouvrirAssociation(u)}
-																	className="rounded-md border border-blue-300 px-2 py-1 text-blue-700 transition hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-50"
+																	className="rounded-full border border-blue-300 px-3 py-1 font-medium text-blue-700 transition hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-50"
 																>
 																	Lier une fiche
 																</button>
@@ -192,7 +192,7 @@ export default function PageUtilisateurs() {
 																disabled={estMoi || enCours === u.id || associationEnCours}
 																title={estMoi ? 'Vous ne pouvez pas modifier votre propre rôle' : undefined}
 																onClick={() => handleChangerRole(u)}
-																className="rounded-md border border-slate-300 px-2 py-1 text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
+																className="rounded-full border border-slate-300 px-3 py-1 font-medium text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
 															>
 																{u.role === 'ADMIN' ? 'Passer employé' : 'Passer administrateur'}
 															</button>

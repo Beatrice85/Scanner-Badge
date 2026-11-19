@@ -20,7 +20,7 @@ type ChartProps = {
 export default function StatChart({ pointagesParChantier, congesParStatut }: ChartProps) {
   return (
     <div className="mt-8 grid w-full items-start gap-8 lg:grid-cols-[1.4fr_1fr]">
-      <section className="h-[24rem] rounded-[22px] border border-slate-200 bg-white p-5 shadow-xl md:h-[28rem] md:p-6">
+      <section className="h-[24rem] rounded-bloc border border-slate-200 bg-white p-5 shadow-xl md:h-[28rem] md:p-6">
         <h3 className="mb-3 text-lg font-semibold text-slate-900 md:text-xl">Pointages par chantier</h3>
         <ResponsiveContainer width="100%" height="90%">
           <BarChart data={pointagesParChantier} barCategoryGap="20%">
@@ -41,7 +41,7 @@ export default function StatChart({ pointagesParChantier, congesParStatut }: Cha
         </ResponsiveContainer>
       </section>
 
-      <section className="h-[24rem] rounded-[22px] border border-slate-200 bg-white p-5 shadow-xl md:h-[28rem] md:p-6">
+      <section className="h-[24rem] rounded-bloc border border-slate-200 bg-white p-5 shadow-xl md:h-[28rem] md:p-6">
         <h3 className="mb-3 text-lg font-semibold text-slate-900 md:text-xl">Congés par statut</h3>
         <ResponsiveContainer width="100%" height="90%">
           <PieChart>

@@ -200,13 +200,13 @@ export default function Sidebar() {
     <>
       <a href="#contenu" className="lien-evitement">Aller au contenu</a>
 
-      <header className="fixed inset-x-4 top-4 z-40 hidden items-center justify-between gap-4 rounded-[22px] border border-slate-200 bg-white px-5 py-3 shadow-md lg:flex">
+      <header className="fixed inset-x-4 top-4 z-40 hidden items-center justify-between gap-4 rounded-bloc border border-slate-200 bg-white px-5 py-3 shadow-md lg:flex">
         {marque}
         {utilisateur && <div className="flex items-center gap-4">{blocUtilisateur}</div>}
       </header>
 
       {/* Barre supérieure (petit écran) */}
-      <div className="flex flex-col gap-3 rounded-[22px] border border-slate-200 bg-white px-4 py-3 shadow-md lg:hidden">
+      <div className="flex flex-col gap-3 rounded-bloc border border-slate-200 bg-white px-4 py-3 shadow-md lg:hidden">
         <div className="flex items-center justify-between gap-3">
           {marque}
           <button
@@ -240,7 +240,7 @@ export default function Sidebar() {
           // Petit écran : panneau latéral affiché seulement si le menu est ouvert.
           menuOuvert ? 'fixed inset-y-0 left-0 flex w-[85vw] max-w-[18rem] rounded-r-[28px] border' : 'hidden',
           // Grand écran : carte fixe sous la barre horizontale.
-          'lg:fixed lg:bottom-4 lg:left-4 lg:top-24 lg:flex lg:w-72 lg:max-w-none lg:rounded-[28px] lg:border',
+          'lg:fixed lg:bottom-4 lg:left-4 lg:top-24 lg:flex lg:w-72 lg:max-w-none lg:rounded-carte lg:border',
         ].join(' ')}
       >
         <div className="border-b border-slate-200 px-5 py-5 lg:hidden">{marque}</div>

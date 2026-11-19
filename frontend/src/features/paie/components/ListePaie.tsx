@@ -69,7 +69,7 @@ function CalculateurPaie({
 
 	if (!estAdmin && !employeId) {
 		return (
-			<div role="alert" className="rounded-[22px] border border-amber-300 bg-amber-50 p-4 text-amber-900">
+			<div role="alert" className="rounded-bloc border border-amber-300 bg-amber-50 p-4 text-amber-900">
 				Votre compte n'est associé à aucun employé. Contactez un administrateur pour consulter votre fiche de paie.
 			</div>
 		);
@@ -77,7 +77,7 @@ function CalculateurPaie({
 
 	return (
 		<div className="space-y-6">
-			<section className="rounded-[24px] border border-slate-200 bg-white p-5 shadow-xl print:hidden">
+			<section className="rounded-carte border border-slate-200 bg-white p-5 shadow-xl print:hidden">
 				<h2 className="text-lg font-semibold text-slate-900">Calculer une fiche de paie</h2>
 				<p className="mt-1 text-sm text-slate-600">
 					{estAdmin
@@ -197,7 +197,7 @@ export default function ListePaie() {
 					<Sidebar />
 				</div>
 				<main id="contenu" tabIndex={-1} className="min-w-0 flex-1 space-y-6 focus:outline-none lg:ml-80 print:ml-0">
-					<header className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-xl">
+					<header className="rounded-carte border border-slate-200 bg-white p-6 shadow-xl">
 						<p className="text-sm font-semibold uppercase tracking-[0.3em] text-blue-700">Ressources humaines</p>
 						<h1 className="mt-2 text-2xl font-semibold text-slate-900">
 							{utilisateur?.role === 'EMPLOYE' ? 'Ma fiche de paie' : 'Gestion de la paie'}

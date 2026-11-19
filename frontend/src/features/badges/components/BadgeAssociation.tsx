@@ -47,7 +47,7 @@ export default function BadgeAssociation() {
       <div className="mx-auto flex w-full flex-col gap-6 lg:flex-row lg:pt-24">
         <Sidebar />
         <main id="contenu" tabIndex={-1} className="flex-1 min-w-0 focus:outline-none lg:ml-80 space-y-6">
-          <div className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-xl">
+          <div className="rounded-carte border border-slate-200 bg-white p-6 shadow-xl">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
               <div>
                 <p className="text-sm font-semibold uppercase tracking-[0.3em] text-blue-600">Dashboard</p>
@@ -65,16 +65,16 @@ export default function BadgeAssociation() {
           </div>
 
           {(employesError || badgeError) && (
-            <div className="rounded-[22px] border border-rose-300 bg-rose-50 p-4 text-rose-700">
+            <div className="rounded-bloc border border-rose-300 bg-rose-50 p-4 text-rose-700">
               {employesError || badgeError}
             </div>
           )}
 
           {result ? (
-            <div className="rounded-[22px] border border-slate-200 bg-slate-50 p-4 text-slate-700">{result}</div>
+            <div className="rounded-bloc border border-slate-200 bg-slate-50 p-4 text-slate-700">{result}</div>
           ) : null}
 
-          <div className="rounded-[24px] border border-slate-200 bg-white p-6 shadow-xl">
+          <div className="rounded-carte border border-slate-200 bg-white p-6 shadow-xl">
             <div className="mb-4 flex items-center justify-between">
               <div>
                 <h3 className="text-lg font-semibold text-slate-900">Liste des badges associés</h3>
@@ -86,10 +86,10 @@ export default function BadgeAssociation() {
             {employesLoading ? (
               <div role="status" aria-live="polite" className="py-8 text-center text-slate-500">Chargement...</div>
             ) : associations.length === 0 ? (
-              <div className="rounded-[20px] border border-slate-200 bg-slate-50 p-6 text-center text-sm text-slate-500">Aucune association de badge trouvée.</div>
+              <div className="rounded-bloc border border-slate-200 bg-slate-50 p-6 text-center text-sm text-slate-500">Aucune association de badge trouvée.</div>
             ) : (
               <>
-              <div className="overflow-x-auto rounded-[20px] border border-slate-200 bg-white shadow-lg">
+              <div className="overflow-x-auto rounded-bloc border border-slate-200 bg-white shadow-lg">
                 <table className="min-w-full divide-y divide-slate-200">
                   <thead className="bg-slate-100">
                     <tr>

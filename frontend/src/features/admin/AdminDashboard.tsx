@@ -72,7 +72,7 @@ export default function AdminDashboard() {
     <div className="min-h-screen bg-[#eef2ff] px-4 py-6 text-slate-900 md:px-6 lg:px-8">
     <div className="mx-auto flex w-full flex-col gap-6 lg:flex-row lg:pt-24">
       <Sidebar />
-      <main id="contenu" tabIndex={-1} className="flex-1 min-w-0 focus:outline-none lg:ml-80 lg:mr-8 rounded-[32px] border border-slate-200 bg-slate-50 p-8 shadow-xl md:p-10">
+      <main id="contenu" tabIndex={-1} className="flex-1 min-w-0 focus:outline-none lg:ml-80 lg:mr-8 rounded-carte border border-slate-200 bg-slate-50 p-8 shadow-xl md:p-10">
           <p className="text-sm font-semibold uppercase tracking-[0.3em] text-blue-600">Scanner Badge</p>
           <h1 className="mt-4 text-3xl font-bold leading-tight text-slate-900 md:text-4xl">
             Tableau de bord administrateur

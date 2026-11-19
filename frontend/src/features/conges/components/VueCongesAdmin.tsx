@@ -105,17 +105,17 @@ export default function VueCongesAdmin() {
 			</div>
 
 			{(error || actionError) && (
-				<div role="alert" className="rounded-[22px] border border-rose-300 bg-rose-50 p-4 text-rose-700">
+				<div role="alert" className="rounded-bloc border border-rose-300 bg-rose-50 p-4 text-rose-700">
 					{actionError || error}
 				</div>
 			)}
 
-			<div className="rounded-[24px] border border-slate-200 bg-white p-4 shadow-xl">
+			<div className="rounded-carte border border-slate-200 bg-white p-4 shadow-xl">
 				{loading ? (
 					<div role="status" aria-live="polite" className="py-8 text-center text-slate-500">Chargement...</div>
 				) : (
 					<>
-					<div className="overflow-x-auto rounded-[20px] border border-slate-200 bg-white shadow-lg">
+					<div className="overflow-x-auto rounded-bloc border border-slate-200 bg-white shadow-lg">
 						<table className="min-w-full divide-y divide-slate-200">
 							<thead className="bg-slate-100">
 								<tr>
@@ -159,14 +159,14 @@ export default function VueCongesAdmin() {
 													<>
 														<button
 															disabled={enCours === c.id}
-															className="rounded-md border border-emerald-300 px-2 py-1 text-emerald-700 transition hover:bg-emerald-50 disabled:opacity-60"
+															className="rounded-full border border-emerald-300 px-3 py-1 font-medium text-emerald-700 transition hover:bg-emerald-50 disabled:opacity-60"
 															onClick={() => executer(c, () => valider(c.id))}
 														>
 															Valider
 														</button>
 														<button
 															disabled={enCours === c.id}
-															className="rounded-md border border-rose-300 px-2 py-1 text-rose-600 transition hover:bg-rose-50 disabled:opacity-60"
+															className="rounded-full border border-rose-300 px-3 py-1 font-medium text-rose-600 transition hover:bg-rose-50 disabled:opacity-60"
 															onClick={() => { setActionError(null); setARefuser(c); }}
 														>
 															Refuser
@@ -175,14 +175,14 @@ export default function VueCongesAdmin() {
 												)}
 												<button
 													disabled={enCours === c.id}
-													className="rounded-md border border-slate-300 px-2 py-1 text-slate-700 transition hover:bg-slate-100 disabled:opacity-60"
+													className="rounded-full border border-slate-300 px-3 py-1 font-medium text-slate-700 transition hover:bg-slate-100 disabled:opacity-60"
 													onClick={() => ouvrirFormulaire(c)}
 												>
 													Éditer
 												</button>
 												<button
 													disabled={enCours === c.id}
-													className="rounded-md border border-slate-300 px-2 py-1 text-slate-500 transition hover:bg-slate-100 disabled:opacity-60"
+													className="rounded-full border border-slate-300 px-3 py-1 font-medium text-slate-500 transition hover:bg-slate-100 disabled:opacity-60"
 													onClick={() => handleDelete(c)}
 												>
 													Supprimer

@@ -41,7 +41,7 @@ export default function FormulaireChantier({ edit, onSubmit, onCancel }: Props) 
 	const isEditing = Boolean(edit?.id);
 
 	return (
-		<form onSubmit={handleSubmit} className="rounded-[24px] border border-white/10 bg-slate-900/70 p-5 shadow-2xl backdrop-blur-xl">
+		<form onSubmit={handleSubmit} className="rounded-carte border border-white/10 bg-slate-900/70 p-5 shadow-2xl backdrop-blur-xl">
 			<div className="mb-4">
 				<h3 className="text-lg font-semibold text-white">{isEditing ? 'Modifier un chantier' : 'Ajouter un chantier'}</h3>
 				<p className="mt-1 text-sm text-slate-400">{isEditing ? 'Mettez à jour les informations du chantier.' : 'Ajoutez un nouveau chantier à la plateforme.'}</p>

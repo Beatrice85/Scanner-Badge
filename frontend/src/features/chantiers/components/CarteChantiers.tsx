@@ -65,7 +65,7 @@ export default function CarteChantiers({ chantiers, pointages = [] }: Props) {
   const pointagesToShow = pointages.filter((p) => chantiers.some((c) => String(c.id) === String(p.chantierId)));
 
   return (
-    <div className="rounded-[24px] border border-slate-200 bg-white p-4 shadow-xl">
+    <div className="rounded-carte border border-slate-200 bg-white p-4 shadow-xl">
       <div className="mb-4 flex items-center justify-between">
         <div>
           <h3 className="text-lg font-semibold text-slate-900">Carte des chantiers</h3>
@@ -74,7 +74,7 @@ export default function CarteChantiers({ chantiers, pointages = [] }: Props) {
       </div>
 
       {/* relative z-0 isolate : stacking context propre, les z-index internes de Leaflet (400, 1000) n'en sortent pas */}
-      <div className="relative z-0 isolate h-[420px] w-full overflow-hidden rounded-[20px] border border-slate-200">
+      <div className="relative z-0 isolate h-[420px] w-full overflow-hidden rounded-bloc border border-slate-200">
         <MapContainer
           center={madagascarCenter}
           zoom={5}

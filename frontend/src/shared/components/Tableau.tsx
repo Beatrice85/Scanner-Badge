@@ -24,7 +24,7 @@ export default function Tableau<T extends Record<string, unknown>>({
   rowClassName,
 }: TableauProps<T>) {
   return (
-    <div className={`overflow-hidden rounded-[20px] border border-white/10 bg-slate-900/70 shadow-xl ${className}`.trim()}>
+    <div className={`overflow-hidden rounded-bloc border border-white/10 bg-slate-900/70 shadow-xl ${className}`.trim()}>
       <table className="min-w-full divide-y divide-white/10">
         <thead className="bg-slate-800/80">
           <tr>

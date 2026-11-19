@@ -43,7 +43,7 @@ export default function TableauChantiers() {
 			<div className="mx-auto flex w-full flex-col gap-6 lg:flex-row lg:pt-24">
 				<Sidebar />
 				<main className="flex-1 lg:ml-80 space-y-6">
-					<div className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-xl">
+					<div className="rounded-carte border border-slate-200 bg-white p-6 shadow-xl">
 						<div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
 							<div>
 								<p className="text-sm font-semibold uppercase tracking-[0.3em] text-blue-600">Dashboard</p>
@@ -61,21 +61,21 @@ export default function TableauChantiers() {
 					</div>
 
 					{error && (
-						<div className="rounded-[22px] border border-rose-300 bg-rose-50 p-4 text-rose-700">
+						<div className="rounded-bloc border border-rose-300 bg-rose-50 p-4 text-rose-700">
 							{error}
 						</div>
 					)}
 
 					<div className="grid gap-4 md:grid-cols-3">
-						<div className="rounded-[22px] border border-slate-200 bg-slate-50 p-4 shadow-sm">
+						<div className="rounded-bloc border border-slate-200 bg-slate-50 p-4 shadow-sm">
 							<p className="text-sm text-slate-500">Chantiers</p>
 							<p className="mt-1 text-2xl font-semibold text-slate-900">{loading ? '—' : chantiers.length}</p>
 						</div>
-						<div className="rounded-[22px] border border-slate-200 bg-slate-50 p-4 shadow-sm">
+						<div className="rounded-bloc border border-slate-200 bg-slate-50 p-4 shadow-sm">
 							<p className="text-sm text-slate-500">Pointages</p>
 							<p className="mt-1 text-2xl font-semibold text-slate-900">{pointages.length}</p>
 						</div>
-						<div className="rounded-[22px] border border-slate-200 bg-slate-50 p-4 shadow-sm">
+						<div className="rounded-bloc border border-slate-200 bg-slate-50 p-4 shadow-sm">
 							<p className="text-sm text-slate-500">Alertes hors zone</p>
 							<p className="mt-1 text-2xl font-semibold text-slate-900">{horsZoneCount}</p>
 						</div>
@@ -83,7 +83,7 @@ export default function TableauChantiers() {
 
 					<CarteChantiers chantiers={chantiers} pointages={pointages} />
 
-					<div className="rounded-[24px] border border-slate-200 bg-white p-4 shadow-xl">
+					<div className="rounded-carte border border-slate-200 bg-white p-4 shadow-xl">
 						<div className="mb-4 flex items-center justify-between">
 							<div>
 								<h3 className="text-lg font-semibold text-slate-900">Liste des chantiers</h3>
@@ -95,7 +95,7 @@ export default function TableauChantiers() {
 						{loading ? (
 							<div className="py-8 text-center text-slate-500">Chargement...</div>
 						) : (
-							<div className="overflow-hidden rounded-[20px] border border-slate-200 bg-white shadow-lg">
+							<div className="overflow-hidden rounded-bloc border border-slate-200 bg-white shadow-lg">
 								<table className="min-w-full divide-y divide-slate-200">
 									<thead className="bg-slate-100">
 										<tr>
@@ -120,8 +120,8 @@ export default function TableauChantiers() {
 												<td className="px-4 py-3 text-sm text-slate-500">{c.longitude ?? '—'}</td>
 												<td className="px-4 py-3 text-sm text-slate-500">{c.rayonToleranceM ?? '—'}</td>
 												<td className="px-4 py-3 text-sm">
-													<button className="mr-2 rounded-md border border-slate-300 px-2 py-1 text-slate-700 transition hover:bg-slate-100" onClick={() => openModal(c)}>Éditer</button>
-													<button className="rounded-md border border-rose-300 px-2 py-1 text-rose-600 transition hover:bg-rose-50" onClick={() => handleDelete(c.id!, c.nom)}>Supprimer</button>
+													<button className="mr-2 rounded-full border border-slate-300 px-3 py-1 font-medium text-slate-700 transition hover:bg-slate-100" onClick={() => openModal(c)}>Éditer</button>
+													<button className="rounded-full border border-rose-300 px-3 py-1 font-medium text-rose-600 transition hover:bg-rose-50" onClick={() => handleDelete(c.id!, c.nom)}>Supprimer</button>
 												</td>
 											</tr>
 										))}

@@ -25,7 +25,7 @@ export default function RouteProtegee({ children, role }: Props) {
 		if (erreur && lireToken()) {
 			return (
 				<div className="flex min-h-screen items-center justify-center bg-[#eef2ff] px-4">
-					<div role="alert" className="max-w-md rounded-[24px] border border-rose-300 bg-white p-6 text-center shadow-xl">
+					<div role="alert" className="max-w-md rounded-carte border border-rose-300 bg-white p-6 text-center shadow-xl">
 						<p className="font-semibold text-rose-700">Impossible de vérifier votre session</p>
 						<p className="mt-2 text-sm text-slate-600">{erreur}</p>
 						<button

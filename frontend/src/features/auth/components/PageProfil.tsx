@@ -86,15 +86,15 @@ export default function PageProfil() {
 			<div className="mx-auto flex w-full flex-col gap-6 lg:flex-row lg:pt-24">
 				<Sidebar />
 				<main id="contenu" tabIndex={-1} className="min-w-0 flex-1 space-y-6 focus:outline-none lg:ml-80">
-					<header className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-xl">
+					<header className="rounded-carte border border-slate-200 bg-white p-6 shadow-xl">
 						<p className="text-sm font-semibold uppercase tracking-[0.3em] text-blue-700">Compte</p>
 						<h1 className="mt-2 text-2xl font-semibold text-slate-900">Mon profil</h1>
 						<p className="mt-2 text-sm text-slate-600">Consultez vos informations et gérez votre photo de profil.</p>
 					</header>
 
-					{erreur && <div role="alert" className="rounded-[22px] border border-rose-300 bg-rose-50 p-4 text-rose-700">{erreur}</div>}
+					{erreur && <div role="alert" className="rounded-bloc border border-rose-300 bg-rose-50 p-4 text-rose-700">{erreur}</div>}
 
-					<section aria-labelledby="titre-photo" className="rounded-[24px] border border-slate-200 bg-white p-6 shadow-xl">
+					<section aria-labelledby="titre-photo" className="rounded-carte border border-slate-200 bg-white p-6 shadow-xl">
 						<h2 id="titre-photo" className="text-lg font-semibold text-slate-900">Photo de profil</h2>
 						<div className="mt-5 flex flex-col gap-6 sm:flex-row sm:items-center">
 							<div className="flex h-28 w-28 shrink-0 items-center justify-center overflow-hidden rounded-full bg-blue-100 text-3xl font-bold text-blue-700 ring-4 ring-blue-50">
@@ -139,7 +139,7 @@ export default function PageProfil() {
 						)}
 					</section>
 
-					<section aria-labelledby="titre-informations" className="rounded-[24px] border border-slate-200 bg-white p-6 shadow-xl">
+					<section aria-labelledby="titre-informations" className="rounded-carte border border-slate-200 bg-white p-6 shadow-xl">
 						<h2 id="titre-informations" className="text-lg font-semibold text-slate-900">Informations du compte</h2>
 						<dl className="mt-4 grid gap-4 sm:grid-cols-2">
 							<div className="rounded-2xl bg-slate-50 p-4">

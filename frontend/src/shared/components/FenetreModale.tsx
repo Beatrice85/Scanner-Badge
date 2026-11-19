@@ -99,7 +99,7 @@ export default function FenetreModale({
         aria-modal="true"
         aria-labelledby={title ? idTitre : undefined}
         tabIndex={-1}
-        className={`relative z-[10000] my-auto max-h-[calc(100vh-3rem)] w-full max-w-lg overflow-y-auto rounded-[24px] border border-white/10 bg-slate-700 p-6 shadow-2xl ${contentClassName}`.trim()}
+        className={`relative z-[10000] my-auto max-h-[calc(100vh-3rem)] w-full max-w-lg overflow-y-auto rounded-carte border border-white/10 bg-slate-700 p-6 shadow-2xl ${contentClassName}`.trim()}
         onClick={(event) => event.stopPropagation()}
       >
         <div className="mb-4 flex items-start justify-between gap-4">

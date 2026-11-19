@@ -20,7 +20,7 @@ const formatMontant = (montant: number) =>
 
 export default function FichePaie({ resultat }: { resultat: ResultatPaie }) {
 	return (
-		<section id="fiche-paie" className="rounded-[24px] border border-slate-200 bg-white p-5 shadow-xl sm:p-7">
+		<section id="fiche-paie" className="rounded-carte border border-slate-200 bg-white p-5 shadow-xl sm:p-7">
 			<div className="flex flex-col gap-4 border-b border-slate-200 pb-5 sm:flex-row sm:items-start sm:justify-between">
 				<div>
 					<p className="text-sm font-semibold uppercase tracking-[0.2em] text-blue-700">Fiche de paie calculée</p>

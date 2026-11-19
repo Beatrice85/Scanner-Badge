@@ -13,7 +13,7 @@ export default function ListeConges() {
 			<div className="mx-auto flex w-full flex-col gap-6 lg:flex-row lg:pt-24">
 				<Sidebar />
 				<main id="contenu" tabIndex={-1} className="flex-1 min-w-0 focus:outline-none lg:ml-80 space-y-6">
-					<div className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-xl">
+					<div className="rounded-carte border border-slate-200 bg-white p-6 shadow-xl">
 						<p className="text-sm font-semibold uppercase tracking-[0.3em] text-emerald-700">
 							{estAdmin ? 'Dashboard' : 'Mon espace'}
 						</p>

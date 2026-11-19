@@ -59,6 +59,15 @@ The stack is React 19 + Vite + Tailwind 3, with a mix of `.jsx` and `.tsx` files
 
 Target: WCAG 2.1 level AA. Keep the existing color code and don't introduce new hues.
 
+**Design tokens (`tailwind.config.js`):** never use arbitrary values such as `rounded-[22px]`; use these names.
+- Font: `font-sans` is **Inter**, loaded in `index.html`, everywhere, including the login and registration pages. Don't add a second typeface.
+- Corner radius:
+  - `rounded-carte` (24 px) for page cards and sections;
+  - `rounded-bloc` (16 px) for inner blocks: tables, alerts, indicators;
+  - `rounded-xl` (12 px) for form fields;
+  - `rounded-full` (pill) for **all buttons**, including table row actions (`px-3 py-1 font-medium`).
+- `index.html` declares `lang="fr"` and the title "Scanner Badge".
+
 **Colors:**
 - `blue-600` is the primary color: links, active page, focus.
 - `emerald` is for create and validate actions.
