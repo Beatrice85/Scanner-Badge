@@ -4,5 +4,7 @@ supabase.txt
 .env
 .env.*
 !.env.example
+# URL publique de l'API pour le build de production (aucun secret)
+!frontend/.env.production
 *.pem
 *.key
