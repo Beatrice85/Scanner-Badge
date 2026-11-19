@@ -11,11 +11,16 @@ const formatHeures = (heures: number) =>
 	`${new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 2 }).format(heures)} h`;
 
 const formatMontant = (montant: number) =>
-	new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(montant);
+	new Intl.NumberFormat('fr-MG', {
+		style: 'currency',
+		currency: 'MGA',
+		currencyDisplay: 'narrowSymbol',
+		maximumFractionDigits: 0,
+	}).format(montant);
 
 export default function FichePaie({ resultat }: { resultat: ResultatPaie }) {
 	return (
-		<section className="rounded-[24px] border border-slate-200 bg-white p-5 shadow-xl sm:p-7">
+		<section id="fiche-paie" className="rounded-[24px] border border-slate-200 bg-white p-5 shadow-xl sm:p-7">
 			<div className="flex flex-col gap-4 border-b border-slate-200 pb-5 sm:flex-row sm:items-start sm:justify-between">
 				<div>
 					<p className="text-sm font-semibold uppercase tracking-[0.2em] text-blue-700">Fiche de paie calculée</p>
@@ -26,7 +31,7 @@ export default function FichePaie({ resultat }: { resultat: ResultatPaie }) {
 						Période du {formatDate(resultat.periode.dateDebut)} au {formatDate(resultat.periode.dateFin)}
 					</p>
 				</div>
-				<BoutonExportPaie />
+				<BoutonExportPaie resultat={resultat} />
 			</div>
 
 			<div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">

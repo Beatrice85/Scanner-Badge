@@ -7,6 +7,8 @@ import {
   effacerSession,
   enregistrerToken,
   lirePayloadToken,
+  migrerPhotoProfilAncienneCle,
+  lirePhotoProfil,
   lireToken,
   nettoyerClesObsoletes,
 } from '../../../shared/lib/session';
@@ -42,12 +44,14 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
     setErreur(null);
     try {
       const moi = await authApi.me();
+      migrerPhotoProfilAncienneCle(moi.id);
+      const profil = { ...moi, photo: lirePhotoProfil(moi.id) ?? moi.photo ?? null };
       if (tokenPerime(token, moi)) {
         effacerSession();
         setUtilisateur(null);
         setErreur(MESSAGE_SESSION_PERIMEE);
       } else {
-        setUtilisateur(moi);
+        setUtilisateur(profil);
       }
     } catch (err: any) {
       setUtilisateur(null);
@@ -69,8 +73,10 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
     try {
       // Le login ne renvoie ni id ni nom : on lit le profil complet.
       const moi = await authApi.me();
-      setUtilisateur(moi);
-      return moi;
+      migrerPhotoProfilAncienneCle(moi.id);
+      const profil = { ...moi, photo: lirePhotoProfil(moi.id) ?? moi.photo ?? null };
+      setUtilisateur(profil);
+      return profil;
     } catch (err) {
       effacerSession();
       throw err;

@@ -192,7 +192,7 @@ export default function ListePaie() {
 
 	return (
 		<div className="min-h-screen bg-[#eef2ff] px-4 py-6 text-slate-900 md:px-6 lg:px-8 print:bg-white print:p-0">
-			<div className="mx-auto flex w-full flex-col gap-6 lg:flex-row">
+			<div className="mx-auto flex w-full flex-col gap-6 lg:flex-row lg:pt-24 print:pt-0">
 				<div className="print:hidden">
 					<Sidebar />
 				</div>

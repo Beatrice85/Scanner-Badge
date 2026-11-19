@@ -8,6 +8,7 @@ export type Utilisateur = {
   email: string;
   role: Role;
   employeId: string | null;
+  photo?: string | null;
 };
 
 // Réponse de POST /auth/login

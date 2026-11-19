@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type FormEvent } from 'react';
+import { Link } from 'react-router-dom';
 import Sidebar from '../../../shared/components/Sidebar';
 import { useAuth } from '../../auth/context/auth-context';
 import type { Role } from '../../auth/types';
@@ -7,6 +8,9 @@ import useUtilisateurs from '../hooks/useUtilisateurs';
 import type { CompteUtilisateur } from '../types';
 import Pagination from '../../../shared/components/Pagination';
 import usePagination from '../../../shared/hooks/usePagination';
+import { lirePhotoProfil } from '../../../shared/lib/session';
+import FenetreModale from '../../../shared/components/FenetreModale';
+import type { Employee } from '../../employes/api/employes.api';
 
 const LIBELLES_ROLE: Record<Role, string> = { ADMIN: 'Administrateur', EMPLOYE: 'Employé' };
 
@@ -19,13 +23,16 @@ const CLASSES_ROLE: Record<Role, string> = {
 // Les règles (pas son propre rôle, pas le dernier ADMIN) sont vérifiées par le backend.
 export default function PageUtilisateurs() {
 	const { utilisateur: moi } = useAuth();
-	const { utilisateurs, loading, error, changerRole } = useUtilisateurs();
+	const { utilisateurs, loading, error, changerRole, associerEmploye } = useUtilisateurs();
 	const pagination = usePagination(utilisateurs);
 	const { employes } = useEmployes();
 
 	const [enCours, setEnCours] = useState<string | null>(null);
 	const [actionError, setActionError] = useState<string | null>(null);
-	const [succes, setSucces] = useState<string | null>(null);
+	const [compteAAssocier, setCompteAAssocier] = useState<CompteUtilisateur | null>(null);
+	const [employeIdSelectionne, setEmployeIdSelectionne] = useState('');
+	const [associationEnCours, setAssociationEnCours] = useState(false);
+	const [associationErreur, setAssociationErreur] = useState<string | null>(null);
 
 	const nomsEmployes = useMemo(() => {
 		const map: Record<string, string> = {};
@@ -35,6 +42,41 @@ export default function PageUtilisateurs() {
 		return map;
 	}, [employes]);
 
+	const employesDisponibles = useMemo(() => {
+		const idsLies = new Set(
+			utilisateurs
+				.map(compte => compte.employeId)
+				.filter((id): id is string => id !== null),
+		);
+		return employes.filter(
+			(employe): employe is Employee & { id: string | number } =>
+				employe.id !== undefined && !idsLies.has(String(employe.id)),
+		);
+	}, [employes, utilisateurs]);
+
+	function ouvrirAssociation(compte: CompteUtilisateur) {
+		setCompteAAssocier(compte);
+		setEmployeIdSelectionne('');
+		setAssociationErreur(null);
+	}
+
+	async function handleAssocierEmploye(event: FormEvent<HTMLFormElement>) {
+		event.preventDefault();
+		if (!compteAAssocier || !employeIdSelectionne) return;
+
+		setAssociationErreur(null);
+		setAssociationEnCours(true);
+		try {
+			await associerEmploye(compteAAssocier.id, employeIdSelectionne);
+			setCompteAAssocier(null);
+			setEmployeIdSelectionne('');
+		} catch (err) {
+			setAssociationErreur(err instanceof Error ? err.message : "Erreur lors de l'association de la fiche employé.");
+		} finally {
+			setAssociationEnCours(false);
+		}
+	}
+
 	async function handleChangerRole(compte: CompteUtilisateur) {
 		const nouveauRole: Role = compte.role === 'ADMIN' ? 'EMPLOYE' : 'ADMIN';
 		const confirmed = window.confirm(
@@ -43,14 +85,9 @@ export default function PageUtilisateurs() {
 		if (!confirmed) return;
 
 		setActionError(null);
-		setSucces(null);
 		setEnCours(compte.id);
 		try {
 			await changerRole(compte.id, nouveauRole);
-			setSucces(
-				`${compte.nom} est maintenant ${LIBELLES_ROLE[nouveauRole].toLowerCase()}. ` +
-					'Ce compte devra se reconnecter pour que le changement soit pris en compte.',
-			);
 		} catch (err: any) {
 			setActionError(err?.message || 'Erreur lors du changement de rôle');
 		} finally {
@@ -60,7 +97,7 @@ export default function PageUtilisateurs() {
 
 	return (
 		<div className="min-h-screen bg-[#eef2ff] px-4 py-6 text-slate-900 md:px-6 lg:px-8">
-			<div className="mx-auto flex w-full flex-col gap-6 lg:flex-row">
+			<div className="mx-auto flex w-full flex-col gap-6 lg:flex-row lg:pt-24">
 				<Sidebar />
 				<main id="contenu" tabIndex={-1} className="flex-1 min-w-0 focus:outline-none lg:ml-80 space-y-6">
 					<div className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-xl">
@@ -70,12 +107,6 @@ export default function PageUtilisateurs() {
 							Comptes de connexion et leur rôle (choisi à l'inscription, modifiable ici).
 						</p>
 					</div>
-
-					{succes && (
-						<div role="status" className="rounded-[22px] border border-emerald-300 bg-emerald-50 p-4 text-emerald-800">
-							{succes}
-						</div>
-					)}
 
 					{(error || actionError) && (
 						<div role="alert" className="rounded-[22px] border border-rose-300 bg-rose-50 p-4 text-rose-700">
@@ -106,11 +137,34 @@ export default function PageUtilisateurs() {
 											</tr>
 										) : pagination.elementsPage.map(u => {
 											const estMoi = u.id === moi?.id;
+											const photoProfil = lirePhotoProfil(u.id);
+											const initiales = u.nom.trim().split(/\s+/).filter(Boolean);
+											const avatarInitiales = (initiales.length > 1
+												? initiales[0][0] + initiales[initiales.length - 1][0]
+												: (initiales[0] ?? '?').slice(0, 2)
+											).toUpperCase();
 											return (
 												<tr key={u.id} className="hover:bg-slate-50">
 													<td className="px-4 py-3 text-sm text-slate-700">
-														{u.nom}
-														{estMoi && <span className="ml-2 text-xs text-slate-500">(vous)</span>}
+														<div className="flex items-center gap-3">
+															<Link
+																to={`/utilisateurs/${u.id}`}
+																aria-label={`Voir le profil de ${u.nom}`}
+																className="shrink-0 rounded-full"
+															>
+																{photoProfil ? (
+																	<img src={photoProfil} alt="" className="h-12 w-12 rounded-full object-cover ring-1 ring-slate-200" />
+																) : (
+																	<span aria-hidden="true" className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 text-sm font-bold text-blue-700 ring-1 ring-slate-200">
+																		{avatarInitiales}
+																	</span>
+																)}
+															</Link>
+															<span>
+																{u.nom}
+																{estMoi && <span className="ml-2 text-xs text-slate-500">(vous)</span>}
+															</span>
+														</div>
 													</td>
 													<td className="px-4 py-3 text-sm text-slate-500">{u.email}</td>
 													<td className="px-4 py-3 text-sm">
@@ -122,15 +176,27 @@ export default function PageUtilisateurs() {
 														{u.employeId ? nomsEmployes[u.employeId] || u.employeId : <span className="text-slate-500">Non liée</span>}
 													</td>
 													<td className="px-4 py-3 text-sm">
-														<button
-															type="button"
-															disabled={estMoi || enCours === u.id}
-															title={estMoi ? 'Vous ne pouvez pas modifier votre propre rôle' : undefined}
-															onClick={() => handleChangerRole(u)}
-															className="rounded-md border border-slate-300 px-2 py-1 text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
-														>
-															{u.role === 'ADMIN' ? 'Passer employé' : 'Passer administrateur'}
-														</button>
+														<div className="flex flex-wrap gap-2">
+															{!u.employeId && (
+																<button
+																	type="button"
+																	disabled={associationEnCours || enCours === u.id}
+																	onClick={() => ouvrirAssociation(u)}
+																	className="rounded-md border border-blue-300 px-2 py-1 text-blue-700 transition hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-50"
+																>
+																	Lier une fiche
+																</button>
+															)}
+															<button
+																type="button"
+																disabled={estMoi || enCours === u.id || associationEnCours}
+																title={estMoi ? 'Vous ne pouvez pas modifier votre propre rôle' : undefined}
+																onClick={() => handleChangerRole(u)}
+																className="rounded-md border border-slate-300 px-2 py-1 text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
+															>
+																{u.role === 'ADMIN' ? 'Passer employé' : 'Passer administrateur'}
+															</button>
+														</div>
 													</td>
 												</tr>
 											);
@@ -154,6 +220,68 @@ export default function PageUtilisateurs() {
 					</div>
 				</main>
 			</div>
+			<FenetreModale
+				open={compteAAssocier !== null}
+				onClose={() => {
+					if (!associationEnCours) setCompteAAssocier(null);
+				}}
+				title="Associer une fiche employé"
+				footer={
+					<>
+						<button
+							type="button"
+							disabled={associationEnCours}
+							onClick={() => setCompteAAssocier(null)}
+							className="min-h-11 rounded-full border border-white/30 px-4 py-2 text-sm font-semibold text-slate-100 transition hover:bg-white/10 disabled:opacity-50"
+						>
+							Annuler
+						</button>
+						<button
+							type="submit"
+							form="form-association-employe"
+							disabled={associationEnCours || employesDisponibles.length === 0}
+							className="min-h-11 rounded-full bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+						>
+							{associationEnCours ? 'Association…' : 'Associer'}
+						</button>
+					</>
+				}
+			>
+				{compteAAssocier && (
+					<form id="form-association-employe" onSubmit={handleAssocierEmploye} className="space-y-4">
+						<p>
+							Compte : <span className="font-semibold text-white">{compteAAssocier.nom}</span>
+						</p>
+						<div>
+							<label htmlFor="association-employe" className="mb-1 block font-medium text-slate-100">
+								Fiche employé
+							</label>
+							<select
+								id="association-employe"
+								required
+								value={employeIdSelectionne}
+								onChange={event => setEmployeIdSelectionne(event.target.value)}
+								disabled={associationEnCours || employesDisponibles.length === 0}
+								className="min-h-11 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-slate-900"
+							>
+								<option value="">
+									{employesDisponibles.length ? 'Sélectionner un employé' : 'Aucune fiche employé disponible'}
+								</option>
+								{employesDisponibles.map(employe => (
+									<option key={String(employe.id)} value={String(employe.id)}>
+										{employe.prenom} {employe.nom} — {employe.id}
+									</option>
+								))}
+							</select>
+						</div>
+						{associationErreur && (
+							<p role="alert" className="rounded-xl border border-rose-300 bg-rose-50 p-3 text-rose-800">
+								{associationErreur}
+							</p>
+						)}
+					</form>
+				)}
+			</FenetreModale>
 		</div>
 	);
 }

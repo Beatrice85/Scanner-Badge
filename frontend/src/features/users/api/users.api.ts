@@ -11,6 +11,9 @@ export const usersApi = {
   changerRole: async (id: string, role: Role): Promise<CompteUtilisateur> => {
     return client.patch(`/users/${id}/role`, { role });
   },
+  associerEmploye: async (id: string, employeId: string): Promise<CompteUtilisateur> => {
+    return client.patch(`/users/${id}/employe`, { employeId });
+  },
 };
 
 export default usersApi;

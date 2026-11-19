@@ -27,9 +27,15 @@ export default function useUtilisateurs() {
 		return res;
 	}
 
+	async function associerEmploye(id: string, employeId: string) {
+		const res = await usersApi.associerEmploye(id, employeId);
+		setUtilisateurs(prev => prev.map(u => (u.id === id ? res : u)));
+		return res;
+	}
+
 	useEffect(() => {
 		fetchAll();
 	}, [fetchAll]);
 
-	return { utilisateurs, loading, error, fetchAll, changerRole };
+	return { utilisateurs, loading, error, fetchAll, changerRole, associerEmploye };
 }

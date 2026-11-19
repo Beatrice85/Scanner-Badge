@@ -12,7 +12,9 @@ import BadgeAssociation from '../features/badges/components/BadgeAssociation';
 import ListeConges from '../features/conges/components/ListeConges';
 import AccesRefuse from '../features/auth/components/AccesRefuse';
 import PageUtilisateurs from '../features/users/components/PageUtilisateurs';
+import PageProfilUtilisateur from '../features/users/components/PageProfilUtilisateur';
 import ListePaie from '../features/paie/components/ListePaie';
+import PageProfil from '../features/auth/components/PageProfil';
 
 export default function RouteurApp() {
   return (
@@ -82,10 +84,26 @@ export default function RouteurApp() {
           }
         />
         <Route
+          path="/utilisateurs/:id"
+          element={
+            <RouteProtegee role="ADMIN">
+              <PageProfilUtilisateur />
+            </RouteProtegee>
+          }
+        />
+        <Route
           path="/paie"
           element={
             <RouteProtegee>
               <ListePaie />
+            </RouteProtegee>
+          }
+        />
+        <Route
+          path="/profil"
+          element={
+            <RouteProtegee>
+              <PageProfil />
             </RouteProtegee>
           }
         />

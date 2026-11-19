@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import paieApi from '../api/paie.api';
 import type { ResultatPaie } from '../types';
+import { notifierToast } from '../../../shared/lib/toast';
 
 // Calcul à la demande : pas de chargement automatique, car le backend a besoin
 // d'un employé et d'une période.
@@ -15,6 +16,7 @@ export default function usePaie() {
 		try {
 			const data = await paieApi.calculer(employeId, dateDebut, dateFin);
 			setResultat(data);
+			notifierToast('Fiche de paie calculée.');
 			return data;
 		} catch (err: unknown) {
 			setResultat(null);

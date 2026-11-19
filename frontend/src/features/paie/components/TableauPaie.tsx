@@ -4,7 +4,12 @@ const formatHeures = (heures: number) =>
 	`${new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 2 }).format(heures)} h`;
 
 const formatMontant = (montant: number) =>
-	new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(montant);
+	new Intl.NumberFormat('fr-MG', {
+		style: 'currency',
+		currency: 'MGA',
+		currencyDisplay: 'narrowSymbol',
+		maximumFractionDigits: 0,
+	}).format(montant);
 
 export default function TableauPaie({ resultat }: { resultat: ResultatPaie }) {
 	const lignes = [

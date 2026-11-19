@@ -1,7 +1,9 @@
-import React, { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { accueilDuRole, useAuth } from '../../features/auth/context/auth-context';
 import type { Role } from '../../features/auth/types';
+import { ecouterPhotoProfil, lirePhotoProfil } from '../lib/session';
+import { notifierToast } from '../lib/toast';
 
 // ---------------------------------------------------------------------------
 // Icônes (SVG en ligne, trait 1.8, 20 px). Décoratives : aria-hidden, le libellé
@@ -72,8 +74,6 @@ const RUBRIQUES: { titre: string; titreEmploye?: string; liens: Lien[] }[] = [
   },
 ];
 
-const LIBELLE_ROLE: Record<Role, string> = { ADMIN: 'Administrateur', EMPLOYE: 'Employé' };
-
 function initiales(nom: string): string {
   const mots = nom.trim().split(/\s+/).filter(Boolean);
   const lettres = mots.length > 1 ? mots[0][0] + mots[mots.length - 1][0] : (mots[0] ?? '?').slice(0, 2);
@@ -83,7 +83,7 @@ function initiales(nom: string): string {
 const ID_MENU = 'menu-principal';
 
 // Navigation principale.
-// - Grand écran (lg) : carte fixe à gauche, toute la hauteur (les pages décalent leur contenu avec lg:ml-80).
+// - Grand écran (lg) : barre utilisateur en haut et navigation fixe à gauche.
 // - Petit écran : barre supérieure + panneau repliable (bouton avec aria-expanded), fermé
 //   automatiquement après navigation, avec Échap ou en touchant le fond.
 // - Page courante : fond bleu (couleur principale) et aria-current="page".
@@ -93,6 +93,18 @@ export default function Sidebar() {
   const navigate = useNavigate();
   const location = useLocation();
   const [menuOuvert, setMenuOuvert] = useState(false);
+  const [photoProfil, setPhotoProfil] = useState<string | null>(() =>
+    utilisateur ? lirePhotoProfil(utilisateur.id) : null,
+  );
+
+  useEffect(() => {
+    setPhotoProfil(utilisateur ? lirePhotoProfil(utilisateur.id) : null);
+  }, [utilisateur?.id]);
+
+  useEffect(
+    () => ecouterPhotoProfil(() => setPhotoProfil(utilisateur ? lirePhotoProfil(utilisateur.id) : null)),
+    [utilisateur?.id],
+  );
 
   const role = utilisateur?.role;
   const estEmploye = role === 'EMPLOYE';
@@ -117,13 +129,15 @@ export default function Sidebar() {
   }, [menuOuvert]);
 
   function seDeconnecter() {
+    notifierToast('Déconnexion réussie.');
     deconnexion();
+    setPhotoProfil(null);
     navigate('/login', { replace: true });
   }
 
   const classeLien = ({ isActive }: { isActive: boolean }) =>
     [
-      'group flex min-h-11 items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition',
+      'group flex min-h-11 items-center gap-3 rounded-xl px-3 py-2.5 text-base font-medium transition',
       isActive
         ? 'bg-blue-600 text-white shadow-md shadow-blue-600/25'
         : 'text-slate-700 hover:bg-slate-100 hover:text-slate-900',
@@ -135,31 +149,82 @@ export default function Sidebar() {
         <Icone nom="marque" className="h-6 w-6" />
       </span>
       <span className="min-w-0">
-        <span className="block truncate text-base font-bold tracking-tight text-slate-900">Scanner Badge</span>
-        <span className="block truncate text-xs font-medium text-slate-500">
+        <span className="block truncate text-lg font-bold tracking-tight text-slate-900">Scanner Badge</span>
+        <span className="block truncate text-sm font-medium text-slate-500">
           {estEmploye ? 'Espace employé' : 'Administration'}
         </span>
       </span>
     </Link>
   );
 
+  const blocUtilisateur = utilisateur && (
+    <>
+      <div className="flex min-w-0 items-center gap-3">
+        {photoProfil ? (
+          <img
+            src={photoProfil}
+            alt=""
+            className="h-10 w-10 shrink-0 rounded-full object-cover ring-2 ring-slate-200"
+          />
+        ) : (
+          <span
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-100 text-base font-bold text-blue-700 ring-2 ring-slate-200"
+            aria-hidden="true"
+          >
+            {initiales(utilisateur.nom)}
+          </span>
+        )}
+        <div className="min-w-0">
+          <p className="truncate text-base font-semibold text-slate-900">{utilisateur.nom}</p>
+          <Link
+            to="/profil"
+            aria-current={location.pathname === '/profil' ? 'page' : undefined}
+            className="text-sm font-semibold text-blue-700 hover:text-blue-800"
+          >
+            Mon profil
+          </Link>
+        </div>
+      </div>
+      <button
+        type="button"
+        onClick={seDeconnecter}
+        aria-label="Se déconnecter"
+        className="flex min-h-11 shrink-0 items-center justify-center rounded-xl border border-blue-200 px-3 py-2 text-blue-700 transition hover:border-blue-300 hover:bg-blue-50 sm:px-4"
+      >
+        <Icone nom="sortie" />
+      </button>
+    </>
+  );
+
   return (
     <>
       <a href="#contenu" className="lien-evitement">Aller au contenu</a>
 
-      {/* Barre supérieure (petit écran) */}
-      <div className="flex items-center justify-between gap-3 rounded-[22px] border border-slate-200 bg-white px-4 py-3 shadow-md lg:hidden">
+      <header className="fixed inset-x-4 top-4 z-40 hidden items-center justify-between gap-4 rounded-[22px] border border-slate-200 bg-white px-5 py-3 shadow-md lg:flex">
         {marque}
-        <button
-          type="button"
-          onClick={() => setMenuOuvert(ouvert => !ouvert)}
-          aria-expanded={menuOuvert}
-          aria-controls={ID_MENU}
-          className="flex min-h-11 items-center gap-2 rounded-xl border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
-        >
-          <Icone nom={menuOuvert ? 'fermer' : 'menu'} />
-          {menuOuvert ? 'Fermer' : 'Menu'}
-        </button>
+        {utilisateur && <div className="flex items-center gap-4">{blocUtilisateur}</div>}
+      </header>
+
+      {/* Barre supérieure (petit écran) */}
+      <div className="flex flex-col gap-3 rounded-[22px] border border-slate-200 bg-white px-4 py-3 shadow-md lg:hidden">
+        <div className="flex items-center justify-between gap-3">
+          {marque}
+          <button
+            type="button"
+            onClick={() => setMenuOuvert(ouvert => !ouvert)}
+            aria-expanded={menuOuvert}
+            aria-controls={ID_MENU}
+            className="flex min-h-11 shrink-0 items-center gap-2 rounded-xl border border-slate-300 px-3 py-2 text-base font-semibold text-slate-700 transition hover:bg-slate-100"
+          >
+            <Icone nom={menuOuvert ? 'fermer' : 'menu'} />
+            {menuOuvert ? 'Fermer' : 'Menu'}
+          </button>
+        </div>
+        {utilisateur && (
+          <div className="flex items-center justify-between gap-3 border-t border-slate-200 pt-3">
+            {blocUtilisateur}
+          </div>
+        )}
       </div>
 
       {/* Fond assombri derrière le panneau mobile */}
@@ -174,11 +239,11 @@ export default function Sidebar() {
           'z-50 flex-col border-slate-200 bg-white shadow-xl',
           // Petit écran : panneau latéral affiché seulement si le menu est ouvert.
           menuOuvert ? 'fixed inset-y-0 left-0 flex w-[85vw] max-w-[18rem] rounded-r-[28px] border' : 'hidden',
-          // Grand écran : carte fixe, détachée des bords (cohérente avec les cartes des pages).
-          'lg:fixed lg:inset-y-4 lg:left-4 lg:flex lg:w-72 lg:max-w-none lg:rounded-[28px] lg:border',
+          // Grand écran : carte fixe sous la barre horizontale.
+          'lg:fixed lg:bottom-4 lg:left-4 lg:top-24 lg:flex lg:w-72 lg:max-w-none lg:rounded-[28px] lg:border',
         ].join(' ')}
       >
-        <div className="border-b border-slate-200 px-5 py-5">{marque}</div>
+        <div className="border-b border-slate-200 px-5 py-5 lg:hidden">{marque}</div>
 
         <nav aria-label="Pages" className="flex-1 overflow-y-auto px-3 py-4">
           {rubriques.map((rubrique) => {
@@ -186,7 +251,7 @@ export default function Sidebar() {
             const idTitre = `rubrique-${titre.replace(/\s+/g, '-').toLowerCase()}`;
             return (
               <div key={rubrique.titre} className="mb-5 last:mb-0">
-                <p id={idTitre} className="mb-2 px-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">
+                <p id={idTitre} className="mb-2 px-3 text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
                   {titre}
                 </p>
                 <ul aria-labelledby={idTitre} className="space-y-1">
@@ -204,33 +269,6 @@ export default function Sidebar() {
           })}
         </nav>
 
-        {utilisateur && (
-          <div className="border-t border-slate-200 p-4">
-            <div className="flex items-center gap-3 rounded-2xl bg-slate-50 p-3">
-              <span
-                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-100 text-sm font-bold text-blue-700"
-                aria-hidden="true"
-              >
-                {initiales(utilisateur.nom)}
-              </span>
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-semibold text-slate-900">{utilisateur.nom}</p>
-                <p className="truncate text-xs text-slate-600" title={utilisateur.email}>{utilisateur.email}</p>
-              </div>
-              <span className="shrink-0 rounded-full border border-blue-200 bg-white px-2 py-0.5 text-[11px] font-semibold text-blue-700">
-                {LIBELLE_ROLE[utilisateur.role]}
-              </span>
-            </div>
-            <button
-              type="button"
-              onClick={seDeconnecter}
-              className="mt-3 flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-rose-200 px-4 py-2 text-sm font-semibold text-rose-700 transition hover:border-rose-300 hover:bg-rose-50"
-            >
-              <Icone nom="sortie" />
-              Se déconnecter
-            </button>
-          </div>
-        )}
       </aside>
     </>
   );

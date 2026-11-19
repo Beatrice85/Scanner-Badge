@@ -53,7 +53,7 @@ export default function TableauEmployes() {
 
 	return (
 		<div className="min-h-screen bg-[#eef2ff] px-4 py-6 text-slate-900 md:px-6 lg:px-8">
-			<div className="mx-auto flex w-full flex-col gap-6 lg:flex-row">
+			<div className="mx-auto flex w-full flex-col gap-6 lg:flex-row lg:pt-24">
 				<Sidebar />
 				<main id="contenu" tabIndex={-1} className="flex-1 min-w-0 focus:outline-none lg:ml-80 space-y-6">
 					<div className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-xl">
