@@ -10,6 +10,9 @@ import FormulaireConge from './FormulaireConge';
 import ModaleRefusConge from './ModaleRefusConge';
 import Pagination from '../../../shared/components/Pagination';
 import usePagination from '../../../shared/hooks/usePagination';
+import SqueletteTableau from '../../../shared/components/SqueletteTableau';
+import EtatVide from '../../../shared/components/EtatVide';
+import EtatErreur from '../../../shared/components/EtatErreur';
 
 const FILTRES: { valeur: StatutConge | null; libelle: string }[] = [
 	{ valeur: 'EN_ATTENTE', libelle: LIBELLES_STATUT.EN_ATTENTE },
@@ -25,7 +28,7 @@ function nomEmploye(c: Conge) {
 // Vue ADMIN : GET /conges?statut= (défaut EN_ATTENTE), validation, refus avec motif.
 export default function VueCongesAdmin() {
 	const [statut, setStatut] = useState<StatutConge | null>('EN_ATTENTE');
-	const { conges, loading, error, create, update, remove, valider, refuser } = useConges(statut);
+	const { conges, loading, error, fetchAll, create, update, remove, valider, refuser } = useConges(statut);
 	const pagination = usePagination(conges, undefined, statut);
 	const { employes } = useEmployes();
 
@@ -104,15 +107,17 @@ export default function VueCongesAdmin() {
 				</button>
 			</div>
 
-			{(error || actionError) && (
+			{actionError && (
 				<div role="alert" className="rounded-bloc border border-rose-300 bg-rose-50 p-4 text-rose-700">
-					{actionError || error}
+					{actionError}
 				</div>
 			)}
 
 			<div className="rounded-carte border border-slate-200 bg-white p-4 shadow-xl">
 				{loading ? (
-					<div role="status" aria-live="polite" className="py-8 text-center text-slate-500">Chargement...</div>
+					<SqueletteTableau colonnes={6} libelle="Chargement des congés…" />
+				) : error ? (
+					<EtatErreur message={error} onReessayer={fetchAll} />
 				) : (
 					<>
 					<div className="overflow-x-auto rounded-bloc border border-slate-200 bg-white shadow-lg">
@@ -130,8 +135,16 @@ export default function VueCongesAdmin() {
 							<tbody className="divide-y divide-slate-200">
 								{conges.length === 0 ? (
 									<tr>
-										<td colSpan={6} className="px-4 py-8 text-center text-sm text-slate-500">
-											{statut === 'EN_ATTENTE' ? 'Aucune demande en attente.' : 'Aucun congé.'}
+										<td colSpan={6}>
+											{statut === 'EN_ATTENTE' ? (
+												<EtatVide positif titre="Aucune demande en attente" description="Toutes les demandes de congé ont été traitées." />
+											) : (
+												<EtatVide
+													titre="Aucun congé"
+													description="Aucune demande ne correspond à ce filtre."
+													action={{ libelle: '+ Créer un congé', onClick: () => ouvrirFormulaire(null) }}
+												/>
+											)}
 										</td>
 									</tr>
 								) : pagination.elementsPage.map(c => (

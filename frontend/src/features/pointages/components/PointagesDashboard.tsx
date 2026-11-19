@@ -7,9 +7,12 @@ import useChantiers from '../../chantiers/hooks/useChantiers';
 import FormulairePointage from './FormulairePointage';
 import Pagination from '../../../shared/components/Pagination';
 import usePagination from '../../../shared/hooks/usePagination';
+import SqueletteTableau from '../../../shared/components/SqueletteTableau';
+import EtatVide from '../../../shared/components/EtatVide';
+import EtatErreur from '../../../shared/components/EtatErreur';
 
 export default function PointagesDashboard() {
-  const { pointages, loading, error, create, update, remove } = usePointages();
+  const { pointages, loading, error, fetchAll, create, update, remove } = usePointages();
   const pagination = usePagination(pointages);
   const { employes } = useEmployes();
   const { chantiers } = useChantiers();
@@ -75,13 +78,12 @@ export default function PointagesDashboard() {
             </div>
           </div>
 
-          {error && (
-            <div className="rounded-bloc border border-rose-300 bg-rose-50 p-4 text-rose-700">{error}</div>
-          )}
 
           <div className="rounded-carte border border-slate-200 bg-white p-4 shadow-xl">
             {loading ? (
-              <div role="status" aria-live="polite" className="py-8 text-center text-slate-500">Chargement...</div>
+              <SqueletteTableau colonnes={9} libelle="Chargement des pointages…" />
+            ) : error ? (
+            	<EtatErreur message={error} onReessayer={fetchAll} />
             ) : (
               <>
               <div className="overflow-x-auto rounded-bloc border border-slate-200 bg-white shadow-lg">
@@ -102,7 +104,13 @@ export default function PointagesDashboard() {
                   <tbody className="divide-y divide-slate-200">
                     {pointages.length === 0 ? (
                       <tr>
-                        <td colSpan={9} className="px-4 py-8 text-center text-sm text-slate-500">Aucun pointage enregistré.</td>
+                        <td colSpan={9}>
+                          <EtatVide
+                            titre="Aucun pointage enregistré"
+                            description="Les entrées et sorties des employés apparaîtront ici après leur premier badgeage."
+                            action={{ libelle: '+ Ajouter un pointage', onClick: () => openModal(null) }}
+                          />
+                        </td>
                       </tr>
                     ) : (
                       pagination.elementsPage.map((p) => (

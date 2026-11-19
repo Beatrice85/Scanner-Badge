@@ -6,6 +6,9 @@ import useEmployes from '../../employes/hooks/useEmployes';
 import useChantiers from '../../chantiers/hooks/useChantiers';
 import Pagination from '../../../shared/components/Pagination';
 import usePagination from '../../../shared/hooks/usePagination';
+import SqueletteTableau from '../../../shared/components/SqueletteTableau';
+import EtatVide from '../../../shared/components/EtatVide';
+import EtatErreur from '../../../shared/components/EtatErreur';
 
 export default function BadgeAssociation() {
   const { associate, loading: badgeLoading, error: badgeError } = useBadges();
@@ -64,9 +67,9 @@ export default function BadgeAssociation() {
             </div>
           </div>
 
-          {(employesError || badgeError) && (
+          {badgeError && (
             <div className="rounded-bloc border border-rose-300 bg-rose-50 p-4 text-rose-700">
-              {employesError || badgeError}
+              {badgeError}
             </div>
           )}
 
@@ -84,9 +87,17 @@ export default function BadgeAssociation() {
             </div>
 
             {employesLoading ? (
-              <div role="status" aria-live="polite" className="py-8 text-center text-slate-500">Chargement...</div>
+              <SqueletteTableau colonnes={3} libelle="Chargement des badges…" />
+            ) : employesError ? (
+              <EtatErreur message={employesError} onReessayer={fetchAll} />
             ) : associations.length === 0 ? (
-              <div className="rounded-bloc border border-slate-200 bg-slate-50 p-6 text-center text-sm text-slate-500">Aucune association de badge trouvée.</div>
+              <div className="rounded-bloc border border-slate-200 bg-slate-50">
+                <EtatVide
+                  titre="Aucun badge associé"
+                  description="Associez un badge RFID à un employé pour qu’il puisse pointer sur son chantier."
+                  action={{ libelle: '+ Associer un badge', onClick: () => setIsModalOpen(true) }}
+                />
+              </div>
             ) : (
               <>
               <div className="overflow-x-auto rounded-bloc border border-slate-200 bg-white shadow-lg">

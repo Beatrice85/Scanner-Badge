@@ -11,6 +11,9 @@ import usePagination from '../../../shared/hooks/usePagination';
 import { lirePhotoProfil } from '../../../shared/lib/session';
 import FenetreModale from '../../../shared/components/FenetreModale';
 import type { Employee } from '../../employes/api/employes.api';
+import SqueletteTableau from '../../../shared/components/SqueletteTableau';
+import EtatVide from '../../../shared/components/EtatVide';
+import EtatErreur from '../../../shared/components/EtatErreur';
 
 const LIBELLES_ROLE: Record<Role, string> = { ADMIN: 'Administrateur', EMPLOYE: 'Employé' };
 
@@ -23,7 +26,7 @@ const CLASSES_ROLE: Record<Role, string> = {
 // Les règles (pas son propre rôle, pas le dernier ADMIN) sont vérifiées par le backend.
 export default function PageUtilisateurs() {
 	const { utilisateur: moi } = useAuth();
-	const { utilisateurs, loading, error, changerRole, associerEmploye } = useUtilisateurs();
+	const { utilisateurs, loading, error, fetchAll, changerRole, associerEmploye } = useUtilisateurs();
 	const pagination = usePagination(utilisateurs);
 	const { employes } = useEmployes();
 
@@ -108,15 +111,17 @@ export default function PageUtilisateurs() {
 						</p>
 					</div>
 
-					{(error || actionError) && (
+					{actionError && (
 						<div role="alert" className="rounded-bloc border border-rose-300 bg-rose-50 p-4 text-rose-700">
-							{actionError || error}
+							{actionError}
 						</div>
 					)}
 
 					<div className="rounded-carte border border-slate-200 bg-white p-4 shadow-xl">
 						{loading ? (
-							<div role="status" aria-live="polite" className="py-8 text-center text-slate-500">Chargement...</div>
+							<SqueletteTableau colonnes={5} libelle="Chargement des comptes…" />
+						) : error ? (
+							<EtatErreur message={error} onReessayer={fetchAll} />
 						) : (
 							<>
 							<div className="overflow-x-auto rounded-bloc border border-slate-200 bg-white shadow-lg">
@@ -133,7 +138,9 @@ export default function PageUtilisateurs() {
 									<tbody className="divide-y divide-slate-200">
 										{utilisateurs.length === 0 ? (
 											<tr>
-												<td colSpan={5} className="px-4 py-8 text-center text-sm text-slate-500">Aucun compte.</td>
+												<td colSpan={5}>
+													<EtatVide titre="Aucun compte" description="Les comptes créés à l’inscription apparaîtront ici." />
+												</td>
 											</tr>
 										) : pagination.elementsPage.map(u => {
 											const estMoi = u.id === moi?.id;

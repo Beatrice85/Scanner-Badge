@@ -5,11 +5,22 @@ import Sidebar from '../../../shared/components/Sidebar';
 import CarteChantiers from './CarteChantiers';
 import useChantiers from '../hooks/useChantiers';
 import usePointages from '../../pointages/hooks/usePointages';
+import { useAuth } from '../../auth/context/auth-context';
+import Pagination from '../../../shared/components/Pagination';
+import usePagination from '../../../shared/hooks/usePagination';
+import SqueletteTableau from '../../../shared/components/SqueletteTableau';
+import EtatVide from '../../../shared/components/EtatVide';
+import EtatErreur from '../../../shared/components/EtatErreur';
 
 export default function TableauChantiers() {
-	const { chantiers, loading, error, create, update, remove } = useChantiers();
+	const { chantiers, loading, error, fetchAll, create, update, remove } = useChantiers();
+	const pagination = usePagination(chantiers);
 	const { pointages } = usePointages();
 	const horsZoneCount = pointages.filter((p) => p.alertHorsZone).length;
+	// EMPLOYE : consultation seule (ajout, modification et suppression masqués).
+	// Le backend n'empêche pas ces actions sur /chantiers : ce masquage est la seule barrière côté interface.
+	const { utilisateur } = useAuth();
+	const lectureSeule = utilisateur?.role !== 'ADMIN';
 	const [editing, setEditing] = useState<any>(null);
 	const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -38,33 +49,33 @@ export default function TableauChantiers() {
 		await remove(id);
 	}
 
+	const colonnes = lectureSeule ? 4 : 5;
+
 	return (
 		<div className="min-h-screen bg-[#eef2ff] px-4 py-6 text-slate-900 md:px-6 lg:px-8">
 			<div className="mx-auto flex w-full flex-col gap-6 lg:flex-row lg:pt-24">
 				<Sidebar />
-				<main className="flex-1 lg:ml-80 space-y-6">
+				<main id="contenu" tabIndex={-1} className="flex-1 min-w-0 focus:outline-none lg:ml-80 space-y-6">
 					<div className="rounded-carte border border-slate-200 bg-white p-6 shadow-xl">
 						<div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
 							<div>
 								<p className="text-sm font-semibold uppercase tracking-[0.3em] text-blue-600">Dashboard</p>
-								<h2 className="mt-2 text-2xl font-semibold text-slate-900">Gestion des chantiers</h2>
-								<p className="mt-1 text-sm text-slate-500">Liste, ajout, modification et suppression des chantiers.</p>
+								<h1 className="mt-2 text-2xl font-semibold text-slate-900">Gestion des chantiers</h1>
+								<p className="mt-1 text-sm text-slate-500">
+									{lectureSeule ? 'Consultation des chantiers.' : 'Liste, ajout, modification et suppression des chantiers.'}
+								</p>
 							</div>
-							<button
-								type="button"
-								className="rounded-full bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-emerald-500"
-								onClick={() => openModal(null)}
-							>
-								+ Ajouter un chantier
-							</button>
+							{!lectureSeule && (
+								<button
+									type="button"
+									className="rounded-full bg-emerald-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-emerald-800"
+									onClick={() => openModal(null)}
+								>
+									+ Ajouter un chantier
+								</button>
+							)}
 						</div>
 					</div>
-
-					{error && (
-						<div className="rounded-bloc border border-rose-300 bg-rose-50 p-4 text-rose-700">
-							{error}
-						</div>
-					)}
 
 					<div className="grid gap-4 md:grid-cols-3">
 						<div className="rounded-bloc border border-slate-200 bg-slate-50 p-4 shadow-sm">
@@ -86,56 +97,84 @@ export default function TableauChantiers() {
 					<div className="rounded-carte border border-slate-200 bg-white p-4 shadow-xl">
 						<div className="mb-4 flex items-center justify-between">
 							<div>
-								<h3 className="text-lg font-semibold text-slate-900">Liste des chantiers</h3>
-								<p className="text-sm text-slate-500">Consultez, modifiez ou supprimez un chantier en un clic.</p>
+								<h2 className="text-lg font-semibold text-slate-900">Liste des chantiers</h2>
+								<p className="text-sm text-slate-500">
+									{lectureSeule ? 'Consultez la liste et la carte des chantiers.' : 'Consultez, modifiez ou supprimez un chantier en un clic.'}
+								</p>
 							</div>
-							
 						</div>
 
 						{loading ? (
-							<div className="py-8 text-center text-slate-500">Chargement...</div>
+							<SqueletteTableau colonnes={colonnes} libelle="Chargement des chantiers…" />
+						) : error ? (
+							<EtatErreur message={error} onReessayer={fetchAll} />
 						) : (
-							<div className="overflow-hidden rounded-bloc border border-slate-200 bg-white shadow-lg">
+							<>
+							<div className="overflow-x-auto rounded-bloc border border-slate-200 bg-white shadow-lg">
 								<table className="min-w-full divide-y divide-slate-200">
 									<thead className="bg-slate-100">
 										<tr>
-											<th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Nom</th>
-											<th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Latitude</th>
-											<th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Longitude</th>
-											<th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Rayon Tolérance (m)</th>
-											<th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Actions</th>
+											<th scope="col" className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Nom</th>
+											<th scope="col" className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Latitude</th>
+											<th scope="col" className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Longitude</th>
+											<th scope="col" className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Rayon Tolérance (m)</th>
+											{!lectureSeule && <th scope="col" className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Actions</th>}
 										</tr>
 									</thead>
 									<tbody className="divide-y divide-slate-200">
 										{chantiers.length === 0 ? (
 											<tr>
-												<td colSpan={5} className="px-4 py-8 text-center text-sm text-slate-500">
-													Aucun chantier enregistré pour le moment.
+												<td colSpan={colonnes}>
+													<EtatVide
+														titre="Aucun chantier pour le moment"
+														description={
+															lectureSeule
+																? 'Les chantiers apparaîtront ici dès qu’un administrateur les aura créés.'
+																: 'Créez un premier chantier : il apparaîtra sur la carte avec sa zone de tolérance.'
+														}
+														action={lectureSeule ? undefined : { libelle: '+ Ajouter un chantier', onClick: () => openModal(null) }}
+													/>
 												</td>
 											</tr>
-										) : chantiers.map(c => (
+										) : pagination.elementsPage.map(c => (
 											<tr key={String(c.id)} className="hover:bg-slate-50">
 												<td className="px-4 py-3 text-sm text-slate-700">{c.nom}</td>
 												<td className="px-4 py-3 text-sm text-slate-500">{c.latitude ?? '—'}</td>
 												<td className="px-4 py-3 text-sm text-slate-500">{c.longitude ?? '—'}</td>
 												<td className="px-4 py-3 text-sm text-slate-500">{c.rayonToleranceM ?? '—'}</td>
-												<td className="px-4 py-3 text-sm">
-													<button className="mr-2 rounded-full border border-slate-300 px-3 py-1 font-medium text-slate-700 transition hover:bg-slate-100" onClick={() => openModal(c)}>Éditer</button>
-													<button className="rounded-full border border-rose-300 px-3 py-1 font-medium text-rose-600 transition hover:bg-rose-50" onClick={() => handleDelete(c.id!, c.nom)}>Supprimer</button>
-												</td>
+												{!lectureSeule && (
+													<td className="px-4 py-3 text-sm">
+														<button className="mr-2 rounded-full border border-slate-300 px-3 py-1 font-medium text-slate-700 transition hover:bg-slate-100" onClick={() => openModal(c)}>Éditer</button>
+														<button className="rounded-full border border-rose-300 px-3 py-1 font-medium text-rose-600 transition hover:bg-rose-50" onClick={() => handleDelete(c.id!, c.nom)}>Supprimer</button>
+													</td>
+												)}
 											</tr>
 										))}
 									</tbody>
 								</table>
 							</div>
+							<Pagination
+								page={pagination.page}
+								totalPages={pagination.totalPages}
+								total={pagination.total}
+								premier={pagination.premier}
+								dernier={pagination.dernier}
+								taille={pagination.taille}
+								onPageChange={pagination.setPage}
+								onTailleChange={pagination.setTaille}
+								libelle="chantiers"
+							/>
+							</>
 						)}
 					</div>
 				</main>
 			</div>
 
-			<FenetreModale open={isModalOpen} onClose={closeModal} title={editing?.id ? 'Modifier un chantier' : 'Ajouter un chantier'}>
-				<FormulaireChantier edit={editing} onSubmit={addOrUpdateChantier} onCancel={closeModal} />
-			</FenetreModale>
+			{!lectureSeule && (
+				<FenetreModale open={isModalOpen} onClose={closeModal} title={editing?.id ? 'Modifier un chantier' : 'Ajouter un chantier'}>
+					<FormulaireChantier edit={editing} onSubmit={addOrUpdateChantier} onCancel={closeModal} />
+				</FenetreModale>
+			)}
 		</div>
 	);
 }

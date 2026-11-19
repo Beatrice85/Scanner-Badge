@@ -8,11 +8,14 @@ import BadgeStatutConge from './BadgeStatutConge';
 import FormulaireConge from './FormulaireConge';
 import Pagination from '../../../shared/components/Pagination';
 import usePagination from '../../../shared/hooks/usePagination';
+import SqueletteTableau from '../../../shared/components/SqueletteTableau';
+import EtatVide from '../../../shared/components/EtatVide';
+import EtatErreur from '../../../shared/components/EtatErreur';
 
 // Vue EMPLOYE : GET /conges/moi. Demande sans choix d'employé ; modification et
 // suppression proposées uniquement pour les congés EN_ATTENTE (le backend le vérifie aussi).
 export default function MesConges() {
-	const { conges, loading, error, compteNonLie, create, update, remove } = useMesConges();
+	const { conges, loading, error, compteNonLie, fetchAll, create, update, remove } = useMesConges();
 	const pagination = usePagination(conges);
 
 	const [editing, setEditing] = useState<Conge | null>(null);
@@ -74,15 +77,17 @@ export default function MesConges() {
 				</button>
 			</div>
 
-			{(error || actionError) && (
+			{actionError && (
 				<div role="alert" className="rounded-bloc border border-rose-300 bg-rose-50 p-4 text-rose-700">
-					{actionError || error}
+					{actionError}
 				</div>
 			)}
 
 			<div className="rounded-carte border border-slate-200 bg-white p-4 shadow-xl">
 				{loading ? (
-					<div role="status" aria-live="polite" className="py-8 text-center text-slate-500">Chargement...</div>
+					<SqueletteTableau colonnes={5} libelle="Chargement de vos congés…" />
+				) : error ? (
+					<EtatErreur message={error} onReessayer={fetchAll} />
 				) : (
 					<>
 					<div className="overflow-x-auto rounded-bloc border border-slate-200 bg-white shadow-lg">
@@ -99,8 +104,12 @@ export default function MesConges() {
 							<tbody className="divide-y divide-slate-200">
 								{conges.length === 0 ? (
 									<tr>
-										<td colSpan={5} className="px-4 py-8 text-center text-sm text-slate-500">
-											Vous n'avez encore demandé aucun congé.
+										<td colSpan={5}>
+											<EtatVide
+												titre="Vous n’avez encore demandé aucun congé"
+												description="Vos demandes et leur statut (en attente, validé, refusé) apparaîtront ici."
+												action={{ libelle: '+ Demander un congé', onClick: () => ouvrirFormulaire(null) }}
+											/>
 										</td>
 									</tr>
 								) : pagination.elementsPage.map(c => (

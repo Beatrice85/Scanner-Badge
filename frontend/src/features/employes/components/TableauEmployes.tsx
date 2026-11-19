@@ -6,9 +6,12 @@ import useEmployes from '../hooks/useEmployes';
 import chantiersApi, { Chantier } from '../../../features/chantiers/api/chantiers.api';
 import Pagination from '../../../shared/components/Pagination';
 import usePagination from '../../../shared/hooks/usePagination';
+import SqueletteTableau from '../../../shared/components/SqueletteTableau';
+import EtatVide from '../../../shared/components/EtatVide';
+import EtatErreur from '../../../shared/components/EtatErreur';
 
 export default function TableauEmployes() {
-	const { employes, loading, error, create, update, remove } = useEmployes();
+	const { employes, loading, error, fetchAll, create, update, remove } = useEmployes();
 	// Indicateurs calculés à partir de la liste (aucune valeur en dur)
 	const avecBadge = employes.filter(e => Boolean(e.badge?.uid || e.badgeId)).length;
 	const sansChantier = employes.filter(e => !e.chantierId).length;
@@ -76,11 +79,6 @@ export default function TableauEmployes() {
 						</div>
 					</div>
 
-					{error && (
-						<div className="rounded-bloc border border-rose-300 bg-rose-50 p-4 text-rose-700">
-							{error}
-						</div>
-					)}
 
 					<div className="grid gap-4 md:grid-cols-3">
 						<div className="rounded-bloc border border-slate-200 bg-slate-50 p-4 shadow-sm">
@@ -110,7 +108,9 @@ export default function TableauEmployes() {
 						</div>
 
 						{loading ? (
-							<div role="status" aria-live="polite" className="py-8 text-center text-slate-500">Chargement...</div>
+							<SqueletteTableau colonnes={7} libelle="Chargement des employés…" />
+						) : error ? (
+							<EtatErreur message={error} onReessayer={fetchAll} />
 						) : (
 							<>
 							<div className="overflow-x-auto rounded-bloc border border-slate-200 bg-white shadow-lg">
@@ -129,8 +129,12 @@ export default function TableauEmployes() {
 									<tbody className="divide-y divide-slate-200">
 										{employes.length === 0 ? (
 											<tr>
-												<td colSpan={7} className="px-4 py-8 text-center text-sm text-slate-500">
-													Aucun employé enregistré pour le moment.
+												<td colSpan={7}>
+													<EtatVide
+														titre="Aucun employé pour le moment"
+														description="Ajoutez un employé, ou laissez-les s’inscrire : leur fiche est alors créée automatiquement."
+														action={{ libelle: '+ Ajouter un employé', onClick: () => openModal(null) }}
+													/>
 												</td>
 											</tr>
 										) : pagination.elementsPage.map(e => (

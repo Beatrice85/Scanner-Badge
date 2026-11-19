@@ -93,6 +93,11 @@ Target: WCAG 2.1 level AA. Keep the existing color code and don't introduce new 
   - Render `pagination.elementsPage` in the `<tbody>`, but keep the "Aucun …" empty-state test on the full list.
   - Pass a filter as `cleReinitialisation` to go back to page 1 when it changes (see `VueCongesAdmin`).
   - Table wrappers use `overflow-x-auto`, so tables scroll horizontally on small screens.
+- **Every table handles its 3 states** with the shared components:
+  - **loading**: `<SqueletteTableau colonnes={n} />` (skeleton rows, `role="status"`), never a plain "Chargement…";
+  - **load error**: `<EtatErreur message onReessayer={fetchAll} />`, shown **in place of the table**, never above an empty table;
+  - **empty**: `<EtatVide titre description action? positif? />`, which explains why it is empty and offers the next action, hidden for read-only roles.
+  - The banner at the top of a page is reserved for action errors (`actionError`).
 - `FenetreModale` is an accessible dialog: it handles `role="dialog"`, the focus trap, Escape and focus return, so reuse it for any new modal.
 - `Sidebar` is responsive. On small screens it is a top bar with a "Menu" button (`aria-expanded`) that opens a side panel. From `lg` up it is a fixed card (`lg:left-4 lg:w-72`), and pages keep `lg:ml-80`.
   - Links are left-aligned, each with a decorative SVG icon (`aria-hidden`), and grouped into sections. The ADMIN sees Général, Gestion, Ressources humaines and Administration; the EMPLOYE sees Mon espace and Consultation.
