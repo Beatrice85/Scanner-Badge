@@ -73,7 +73,8 @@ export default function CarteChantiers({ chantiers, pointages = [] }: Props) {
         </div>
       </div>
 
-      <div className="h-[420px] w-full overflow-hidden rounded-[20px] border border-slate-200">
+      {/* relative z-0 isolate : stacking context propre, les z-index internes de Leaflet (400, 1000) n'en sortent pas */}
+      <div className="relative z-0 isolate h-[420px] w-full overflow-hidden rounded-[20px] border border-slate-200">
         <MapContainer
           center={madagascarCenter}
           zoom={5}

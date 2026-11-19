@@ -27,6 +27,15 @@ body {
 	-moz-osx-font-smoothing: grayscale;
 }
 
+/* Leaflet : chaque carte forme son propre stacking context. Les z-index internes de Leaflet
+   (.leaflet-pane = 400, .leaflet-top / .leaflet-bottom = 1000) restent confinés à la carte
+   et ne passent plus au-dessus des modales ni de la barre latérale. */
+.leaflet-container {
+	position: relative;
+	z-index: 0;
+	isolation: isolate;
+}
+
 /* Accessibilité (WCAG 2.1 AA) */
 
 /* 2.4.7 Focus visible : contour net au clavier uniquement (pas au clic souris). */

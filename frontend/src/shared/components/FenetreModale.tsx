@@ -1,4 +1,5 @@
 import { useEffect, useId, useRef, type ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 
 interface FenetreModaleProps {
   open: boolean;
@@ -84,9 +85,12 @@ export default function FenetreModale({
     return null;
   }
 
-  return (
+  // Portail vers <body> : la modale échappe à tout stacking context des parents
+  // (transform, filter, overflow, backdrop-filter) et passe au-dessus de la carte Leaflet,
+  // de la barre latérale (z-50) et de son fond mobile (z-40).
+  return createPortal(
     <div
-      className={`fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-slate-950/70 px-4 py-6 backdrop-blur-sm ${className}`.trim()}
+      className={`fixed inset-0 z-[9999] flex items-center justify-center overflow-y-auto bg-slate-950/70 px-4 py-6 backdrop-blur-sm ${className}`.trim()}
       onClick={closeOnBackdropClick ? onClose : undefined}
     >
       <div
@@ -95,7 +99,7 @@ export default function FenetreModale({
         aria-modal="true"
         aria-labelledby={title ? idTitre : undefined}
         tabIndex={-1}
-        className={`my-auto max-h-[calc(100vh-3rem)] w-full max-w-lg overflow-y-auto rounded-[24px] border border-white/10 bg-slate-700 p-6 shadow-2xl ${contentClassName}`.trim()}
+        className={`relative z-[10000] my-auto max-h-[calc(100vh-3rem)] w-full max-w-lg overflow-y-auto rounded-[24px] border border-white/10 bg-slate-700 p-6 shadow-2xl ${contentClassName}`.trim()}
         onClick={(event) => event.stopPropagation()}
       >
         <div className="mb-4 flex items-start justify-between gap-4">
@@ -116,6 +120,7 @@ export default function FenetreModale({
 
         {footer ? <div className="mt-6 flex justify-end gap-3">{footer}</div> : null}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
