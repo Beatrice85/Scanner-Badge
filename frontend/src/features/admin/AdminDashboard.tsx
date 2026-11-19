@@ -14,12 +14,6 @@ type Stats = {
   pointages: number;
   conges: number;
   paiesCalculables: number;
-  // Indicateurs « À traiter »
-  congesEnAttente: number;
-  sansBadge: number;
-  sansChantier: number;
-  fichesIncompletes: number;
-  pointagesAujourdhui: number;
   pointagesParChantier: { label: string; value: number }[];
   congesParStatut: { label: string; value: number; color: string }[];
 };
@@ -47,7 +41,6 @@ export default function AdminDashboard() {
         const fichesIncompletes = employes.filter(
           (employe) => !(Number(employe.tauxHoraire) > 0) || !(Number(employe.volumeMensuelObligatoire) > 0),
         ).length;
-        const aujourdhui = new Date().toDateString();
         setStats({
           employes: employes.length,
           badges,
@@ -55,13 +48,6 @@ export default function AdminDashboard() {
           pointages: pointages.length,
           conges: conges.length,
           paiesCalculables: employes.length - fichesIncompletes,
-          congesEnAttente: conges.filter((conge) => conge.statut === 'EN_ATTENTE').length,
-          sansBadge: employes.length - badges,
-          sansChantier: employes.filter((employe) => !employe.chantierId).length,
-          fichesIncompletes,
-          pointagesAujourdhui: pointages.filter(
-            (pointage) => pointage.timestamp && new Date(pointage.timestamp).toDateString() === aujourdhui,
-          ).length,
           pointagesParChantier,
           congesParStatut: [
             { label: 'Approuvés', value: conges.filter((conge) => conge.statut === 'VALIDE').length, color: '#059669' },
@@ -87,41 +73,6 @@ export default function AdminDashboard() {
     { label: 'Paies calculables', value: stats?.paiesCalculables ?? 0, to: '/paie' },
   ];
 
-  // Actions attendues de l'administrateur : chaque carte mène directement à la page concernée.
-  const aTraiter = stats
-    ? [
-        {
-          valeur: stats.congesEnAttente,
-          titre: 'Congés à valider',
-          detail: 'Demandes en attente de votre décision.',
-          action: 'Traiter les demandes',
-          to: '/conges',
-        },
-        {
-          valeur: stats.sansBadge,
-          titre: 'Employés sans badge',
-          detail: 'Ils ne peuvent pas pointer sur un chantier.',
-          action: 'Associer un badge',
-          to: '/badges',
-        },
-        {
-          valeur: stats.sansChantier,
-          titre: 'Employés sans chantier',
-          detail: 'Fiches à affecter à un chantier.',
-          action: 'Compléter les fiches',
-          to: '/employes',
-        },
-        {
-          valeur: stats.fichesIncompletes,
-          titre: 'Fiches de paie incomplètes',
-          detail: 'Taux horaire ou volume mensuel non renseigné.',
-          action: 'Renseigner la paie',
-          to: '/employes',
-        },
-      ]
-    : [];
-  const actionsEnAttente = aTraiter.filter((item) => item.valeur > 0);
-
   return (
     <div className="min-h-screen bg-[#eef2ff] px-4 py-6 text-slate-900 md:px-6 lg:px-8">
     <div className="mx-auto flex w-full flex-col gap-6 lg:flex-row lg:pt-24">
@@ -146,46 +97,7 @@ export default function AdminDashboard() {
             </p>
           )}
 
-          {stats && (
-            <section aria-labelledby="titre-a-traiter" className="mt-8">
-              <div className="flex flex-wrap items-baseline justify-between gap-2">
-                <h2 id="titre-a-traiter" className="text-lg font-semibold text-slate-900">À traiter</h2>
-                <p className="text-sm text-slate-600">
-                  {stats.pointagesAujourdhui} pointage{stats.pointagesAujourdhui > 1 ? 's' : ''} aujourd'hui
-                </p>
-              </div>
-
-              {actionsEnAttente.length === 0 ? (
-                <p role="status" className="mt-3 flex items-center gap-2 rounded-bloc border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-800">
-                  <span aria-hidden="true">✓</span> Tout est à jour : aucune action en attente.
-                </p>
-              ) : (
-                <ul className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-                  {actionsEnAttente.map((item) => (
-                    <li key={item.titre}>
-                      <Link
-                        to={item.to}
-                        className="group flex h-full flex-col rounded-bloc border border-amber-200 bg-white p-4 shadow-sm transition hover:border-amber-400 hover:shadow-md"
-                      >
-                        <span className="flex items-center gap-3">
-                          <span className="flex h-10 min-w-10 items-center justify-center rounded-full bg-amber-100 px-2 text-lg font-bold text-amber-800">
-                            {item.valeur}
-                          </span>
-                          <span className="font-semibold text-slate-900">{item.titre}</span>
-                        </span>
-                        <span className="mt-2 text-sm text-slate-600">{item.detail}</span>
-                        <span className="mt-auto pt-3 text-sm font-semibold text-blue-700 group-hover:underline">
-                          {item.action} <span aria-hidden="true">→</span>
-                        </span>
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </section>
-          )}
-
-          <h2 className="mt-8 text-lg font-semibold text-slate-900">Vue d'ensemble</h2>
+          <h2 className="mt-6 text-lg font-semibold text-slate-900">Vue d'ensemble</h2>
           <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3 2xl:grid-cols-6">
             {statCards.map((card) => (
               <Link
