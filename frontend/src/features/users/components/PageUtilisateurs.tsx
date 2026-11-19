@@ -8,7 +8,6 @@ import useUtilisateurs from '../hooks/useUtilisateurs';
 import type { CompteUtilisateur } from '../types';
 import Pagination from '../../../shared/components/Pagination';
 import usePagination from '../../../shared/hooks/usePagination';
-import { lirePhotoProfil } from '../../../shared/lib/session';
 import FenetreModale from '../../../shared/components/FenetreModale';
 import type { Employee } from '../../employes/api/employes.api';
 import SqueletteTableau from '../../../shared/components/SqueletteTableau';
@@ -148,7 +147,7 @@ export default function PageUtilisateurs() {
 											</tr>
 										) : pagination.elementsPage.map(u => {
 											const estMoi = u.id === moi?.id;
-											const photoProfil = lirePhotoProfil(u.id);
+											const photoProfil = u.photoUrl ?? null;
 											const initiales = u.nom.trim().split(/\s+/).filter(Boolean);
 											const avatarInitiales = (initiales.length > 1
 												? initiales[0][0] + initiales[initiales.length - 1][0]

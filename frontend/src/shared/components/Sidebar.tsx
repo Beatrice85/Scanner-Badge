@@ -2,7 +2,6 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { accueilDuRole, useAuth } from '../../features/auth/context/auth-context';
 import type { Role } from '../../features/auth/types';
-import { ecouterPhotoProfil, lirePhotoProfil } from '../lib/session';
 import { notifierToast } from '../lib/toast';
 
 // ---------------------------------------------------------------------------
@@ -93,18 +92,8 @@ export default function Sidebar() {
   const navigate = useNavigate();
   const location = useLocation();
   const [menuOuvert, setMenuOuvert] = useState(false);
-  const [photoProfil, setPhotoProfil] = useState<string | null>(() =>
-    utilisateur ? lirePhotoProfil(utilisateur.id) : null,
-  );
-
-  useEffect(() => {
-    setPhotoProfil(utilisateur ? lirePhotoProfil(utilisateur.id) : null);
-  }, [utilisateur?.id]);
-
-  useEffect(
-    () => ecouterPhotoProfil(() => setPhotoProfil(utilisateur ? lirePhotoProfil(utilisateur.id) : null)),
-    [utilisateur?.id],
-  );
+  // Photo de profil stockée sur le serveur (mise à jour via useAuth après un changement)
+  const photoProfil = utilisateur?.photo ?? null;
 
   const role = utilisateur?.role;
   const estEmploye = role === 'EMPLOYE';
@@ -130,8 +119,7 @@ export default function Sidebar() {
 
   function seDeconnecter() {
     notifierToast('Déconnexion réussie.');
-    deconnexion();
-    setPhotoProfil(null);
+    deconnexion(); // vide l'utilisateur : la photo disparaît avec lui
     navigate('/login', { replace: true });
   }
 

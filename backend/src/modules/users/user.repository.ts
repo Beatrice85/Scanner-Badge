@@ -2,7 +2,7 @@ import { prisma } from "../../database/prisma.service";
 import { Role } from "@prisma/client";
 
 // Champs exposés : jamais le mot de passe.
-const CHAMPS_PUBLICS = { id: true, nom: true, email: true, role: true, employeId: true } as const;
+const CHAMPS_PUBLICS = { id: true, nom: true, email: true, role: true, employeId: true, photoUrl: true } as const;
 
 export class UserRepository {
 

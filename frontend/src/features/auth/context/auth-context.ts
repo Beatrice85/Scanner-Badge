@@ -10,6 +10,8 @@ export type ValeurAuth = {
   connexion: (email: string, password: string) => Promise<Utilisateur>;
   deconnexion: () => void;
   rafraichir: () => Promise<void>;
+  // Met à jour l'utilisateur affiché sans recharger la session (ex. après un changement de photo)
+  mettreAJourUtilisateur: (maj: Partial<Utilisateur>) => void;
 };
 
 export const AuthContext = createContext<ValeurAuth | null>(null);

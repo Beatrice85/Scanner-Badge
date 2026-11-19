@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import Sidebar from '../../../shared/components/Sidebar';
-import { lirePhotoProfil } from '../../../shared/lib/session';
 import usersApi from '../api/users.api';
 import type { CompteUtilisateur } from '../types';
 
@@ -45,7 +44,7 @@ export default function PageProfilUtilisateur() {
 		};
 	}, [id]);
 
-	const photoProfil = utilisateur ? lirePhotoProfil(utilisateur.id) : null;
+	const photoProfil = utilisateur?.photoUrl ?? null;
 
 	return (
 		<div className="min-h-screen bg-[#eef2ff] px-4 py-6 text-slate-900 md:px-6 lg:px-8">

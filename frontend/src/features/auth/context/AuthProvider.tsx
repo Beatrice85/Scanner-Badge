@@ -7,8 +7,6 @@ import {
   effacerSession,
   enregistrerToken,
   lirePayloadToken,
-  migrerPhotoProfilAncienneCle,
-  lirePhotoProfil,
   lireToken,
   nettoyerClesObsoletes,
 } from '../../../shared/lib/session';
@@ -44,8 +42,7 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
     setErreur(null);
     try {
       const moi = await authApi.me();
-      migrerPhotoProfilAncienneCle(moi.id);
-      const profil = { ...moi, photo: lirePhotoProfil(moi.id) ?? moi.photo ?? null };
+      const profil = { ...moi, photo: moi.photoUrl ?? null };
       if (tokenPerime(token, moi)) {
         effacerSession();
         setUtilisateur(null);
@@ -73,8 +70,7 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
     try {
       // Le login ne renvoie ni id ni nom : on lit le profil complet.
       const moi = await authApi.me();
-      migrerPhotoProfilAncienneCle(moi.id);
-      const profil = { ...moi, photo: lirePhotoProfil(moi.id) ?? moi.photo ?? null };
+      const profil = { ...moi, photo: moi.photoUrl ?? null };
       setUtilisateur(profil);
       return profil;
     } catch (err) {
@@ -83,14 +79,22 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  const mettreAJourUtilisateur = useCallback((maj: Partial<Utilisateur>) => {
+    setUtilisateur((actuel) => {
+      if (!actuel) return actuel;
+      const suivant = { ...actuel, ...maj };
+      return { ...suivant, photo: suivant.photoUrl ?? null };
+    });
+  }, []);
+
   useEffect(() => {
     nettoyerClesObsoletes();
     rafraichir();
   }, [rafraichir]);
 
   const valeur = useMemo<ValeurAuth>(
-    () => ({ utilisateur, chargement, erreur, connexion, deconnexion, rafraichir }),
-    [utilisateur, chargement, erreur, connexion, deconnexion, rafraichir],
+    () => ({ utilisateur, chargement, erreur, connexion, deconnexion, rafraichir, mettreAJourUtilisateur }),
+    [utilisateur, chargement, erreur, connexion, deconnexion, rafraichir, mettreAJourUtilisateur],
   );
 
   return <AuthContext.Provider value={valeur}>{children}</AuthContext.Provider>;

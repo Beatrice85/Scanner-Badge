@@ -4,6 +4,7 @@ import  jwt from "jsonwebtoken"
 import { Role } from "@prisma/client";
 import { AuthPayload } from "../../middleware/auth.middleware";
 import { HttpError } from "../../errors/http-error";
+import { detecterFormatImage, supprimerPhotoStockee, televerserPhoto } from "../../stockage/photos-profil";
 
 // Valeurs acceptées à l'inscription (corps de POST /auth/register) et rôle Prisma correspondant.
 export const ROLES_INSCRIPTION: Record<string, Role> = {
@@ -104,6 +105,48 @@ export class AuthService {
         }
 
         return user;
+    }
+
+
+    // Remplace la photo de profil : vérifie le contenu réel du fichier, l'envoie au stockage,
+    // enregistre la nouvelle URL, puis supprime l'ancienne photo (sans bloquer en cas d'échec).
+    async changerPhoto(id: string, fichier: { buffer: Buffer } | undefined) {
+
+        if (!fichier || fichier.buffer.length === 0) {
+            throw new HttpError(400, "Aucune photo reçue (champ « photo » attendu)");
+        }
+
+        const format = detecterFormatImage(fichier.buffer);
+
+        if (!format) {
+            throw new HttpError(415, "Format non pris en charge : envoyez une image JPEG, PNG ou WebP");
+        }
+
+        const user = await this.me(id);
+
+        const nouvelleUrl = await televerserPhoto(id, fichier.buffer, format);
+        const misAJour = await this.repository.updatePhotoUrl(id, nouvelleUrl);
+
+        if (user.photoUrl) {
+            await supprimerPhotoStockee(user.photoUrl).catch(() => undefined);
+        }
+
+        return misAJour;
+    }
+
+
+    async supprimerPhoto(id: string) {
+
+        const user = await this.me(id);
+
+        if (!user.photoUrl) {
+            return user;
+        }
+
+        const misAJour = await this.repository.updatePhotoUrl(id, null);
+        await supprimerPhotoStockee(user.photoUrl).catch(() => undefined);
+
+        return misAJour;
     }
 
 

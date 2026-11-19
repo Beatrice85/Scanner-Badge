@@ -41,6 +41,24 @@ export class AuthController {
         }
     }
 
+    async changerPhoto(req: Request, res: Response) {
+        try {
+            const user = await this.service.changerPhoto(getAuthUser(req).id, req.file);
+            return res.status(200).json(user);
+        } catch (error: any) {
+            return res.status(error instanceof HttpError ? error.status : 500).json({ message: error instanceof HttpError ? error.message : "Erreur lors de l'envoi de la photo" });
+        }
+    }
+
+    async supprimerPhoto(req: Request, res: Response) {
+        try {
+            const user = await this.service.supprimerPhoto(getAuthUser(req).id);
+            return res.status(200).json(user);
+        } catch (error: any) {
+            return res.status(error instanceof HttpError ? error.status : 500).json({ message: error instanceof HttpError ? error.message : "Erreur lors de la suppression de la photo" });
+        }
+    }
+
     async me(req: Request, res: Response) {
         try {
             const user = await this.service.me(getAuthUser(req).id);

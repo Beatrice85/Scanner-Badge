@@ -59,16 +59,18 @@ async function request(path: string, opts: RequestOptions = {}) {
   const url = `${BASE_URL}${path}`;
   const method = opts.method ?? 'GET';
   const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
     ...(opts.headers || {}),
   };
+  // Fichier (FormData) : le navigateur fixe lui-même le Content-Type multipart et sa frontière.
+  const estFichier = typeof FormData !== 'undefined' && opts.body instanceof FormData;
+  if (!estFichier && !headers['Content-Type']) headers['Content-Type'] = 'application/json';
   const token = lireToken();
   if (token) headers['Authorization'] = `Bearer ${token}`;
 
   const res = await fetch(url, {
     method,
     headers,
-    body: opts.body ? JSON.stringify(opts.body) : undefined,
+    body: estFichier ? opts.body : opts.body ? JSON.stringify(opts.body) : undefined,
   });
   if (!res.ok) {
     const text = await res.text();
@@ -87,6 +89,8 @@ export const client = {
   put: (path: string, body: any) => request(path, { method: 'PUT', body }),
   patch: (path: string, body?: any) => request(path, { method: 'PATCH', body }),
   del: (path: string) => request(path, { method: 'DELETE' }),
+  // Envoi multipart/form-data (ex. photo de profil)
+  envoyerFichier: (path: string, formulaire: FormData, method: 'POST' | 'PUT' = 'PUT') => request(path, { method, body: formulaire }),
 };
 
 export default client;

@@ -26,6 +26,15 @@ export const authApi = {
   me: async (): Promise<Utilisateur> => {
     return client.get('/auth/me');
   },
+  // Photo de profil stockée côté serveur (Supabase Storage) : JPEG, PNG ou WebP, 20 Mo max.
+  changerPhoto: async (fichier: File): Promise<Utilisateur> => {
+    const formulaire = new FormData();
+    formulaire.append('photo', fichier);
+    return client.envoyerFichier('/auth/me/photo', formulaire);
+  },
+  supprimerPhoto: async (): Promise<Utilisateur> => {
+    return client.del('/auth/me/photo');
+  },
 };
 
 export default authApi;

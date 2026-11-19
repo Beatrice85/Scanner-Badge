@@ -8,6 +8,9 @@ export type Utilisateur = {
   email: string;
   role: Role;
   employeId: string | null;
+  // URL publique de la photo de profil (Supabase Storage), renvoyée par le serveur
+  photoUrl?: string | null;
+  // Photo affichée (= photoUrl) ; conservé pour les composants existants
   photo?: string | null;
 };
 

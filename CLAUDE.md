@@ -131,12 +131,19 @@ Target: WCAG 2.1 level AA. Keep the existing color code and don't introduce new 
   - The logic is in `backend/src/modules/auth/fiche-employe.ts`.
 - **`Employe.email` is optional and unique.** **`Employe.chantierId` is optional**, but deleting a chantier that still has employees is refused (`onDelete: Restrict`).
 
+**Profile photos** are stored in **Supabase Storage**, in the public bucket `Scanner_Badge` under `photos-profil/<userId>/`, through the backend only (`backend/src/stockage/photos-profil.ts`).
+- The secret key lives in `SUPABASE_SECRET_KEY` on the server: never in the frontend, never in a `VITE_*` variable.
+- The backend needs `SUPABASE_URL`, `SUPABASE_SECRET_KEY` and `SUPABASE_BUCKET`.
+- The file type is checked from the file's real content, not its name or declared type.
+- The frontend reads `utilisateur.photo` (which equals `photoUrl`) from `useAuth()`, and calls `mettreAJourUtilisateur` after an upload. Nothing is kept in `localStorage`.
+
 Models are defined in `backend/prisma/schema.prisma`. Request and response handling lives in `backend/src/modules/<name>/*.controller.ts`, and the business rules in `*.service.ts`.
 
 | Prefix | Endpoints | Access |
 |---|---|---|
 | `/auth` | `POST /register`, `POST /login` (returns `{ token, role, employeId }`) | public |
-| `/auth` | `GET /me` (returns `{ id, nom, email, role, employeId }`) | logged in |
+| `/auth` | `GET /me` (returns `{ id, nom, email, role, employeId, photoUrl }`) | logged in |
+| `/auth` | `PUT /me/photo` (multipart, field `photo`: JPEG/PNG/WebP, 20 MB max), `DELETE /me/photo` | logged in |
 | `/users` | `GET /`, `PATCH /:id/employe` (`{ employeId }`), `PATCH /:id/role` (`{ role }`) | ADMIN |
 | `/conges` | `GET /?statut=`, `PATCH /:id/valider`, `PATCH /:id/refuser` (`{ motifRefus }`) | ADMIN |
 | `/conges` | `GET /moi`, `GET /employe/:employeId`, `GET /:id`, `POST /`, `PUT /:id`, `DELETE /:id` | ADMIN, or the employee concerned |

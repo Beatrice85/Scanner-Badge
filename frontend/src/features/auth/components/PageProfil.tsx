@@ -1,7 +1,7 @@
 import { useState, type ChangeEvent } from 'react';
 import Sidebar from '../../../shared/components/Sidebar';
 import { useAuth } from '../context/auth-context';
-import { effacerPhotoProfil, enregistrerPhotoProfil, lirePhotoProfil } from '../../../shared/lib/session';
+import authApi from '../api/auth.api';
 import { notifierToast } from '../../../shared/lib/toast';
 
 const TAILLE_MAX_PHOTO = 20 * 1024 * 1024;
@@ -13,11 +13,12 @@ function initiales(nom: string): string {
 }
 
 export default function PageProfil() {
-	const { utilisateur } = useAuth();
-	const [photoActuelle, setPhotoActuelle] = useState<string | null>(() =>
-		utilisateur ? lirePhotoProfil(utilisateur.id) : null,
-	);
+	const { utilisateur, mettreAJourUtilisateur } = useAuth();
+	// Photo enregistrée sur le serveur (Supabase Storage), visible sur tous les appareils
+	const photoActuelle = utilisateur?.photo ?? null;
 	const [apercu, setApercu] = useState<string | null>(null);
+	const [fichier, setFichier] = useState<File | null>(null);
+	const [envoi, setEnvoi] = useState(false);
 	const [modificationEnCours, setModificationEnCours] = useState(false);
 	const [supprimerPhoto, setSupprimerPhoto] = useState(false);
 	const [erreur, setErreur] = useState<string | null>(null);
@@ -25,16 +26,16 @@ export default function PageProfil() {
 	if (!utilisateur) return null;
 
 	function choisirPhoto(event: ChangeEvent<HTMLInputElement>) {
-		const fichier = event.target.files?.[0];
+		const fichierChoisi = event.target.files?.[0];
 		event.target.value = '';
-		if (!fichier) return;
+		if (!fichierChoisi) return;
 
 		setErreur(null);
-		if (!['image/jpeg', 'image/png', 'image/webp'].includes(fichier.type)) {
+		if (!['image/jpeg', 'image/png', 'image/webp'].includes(fichierChoisi.type)) {
 			setErreur('Choisissez une image au format JPG, PNG ou WebP.');
 			return;
 		}
-		if (fichier.size > TAILLE_MAX_PHOTO) {
+		if (fichierChoisi.size > TAILLE_MAX_PHOTO) {
 			setErreur('La photo ne doit pas dépasser 20 Mo.');
 			return;
 		}
@@ -46,36 +47,42 @@ export default function PageProfil() {
 				return;
 			}
 			setApercu(lecteur.result);
+			setFichier(fichierChoisi);
 			setSupprimerPhoto(false);
 			setModificationEnCours(true);
 		};
 		lecteur.onerror = () => setErreur('Impossible de lire cette image. Essayez un autre fichier.');
-		lecteur.readAsDataURL(fichier);
+		lecteur.readAsDataURL(fichierChoisi);
 	}
 
 	function annulerModification() {
 		setApercu(null);
+		setFichier(null);
 		setSupprimerPhoto(false);
 		setModificationEnCours(false);
 		setErreur(null);
 	}
 
-	function enregistrerModification() {
+	async function enregistrerModification() {
 		setErreur(null);
+		setEnvoi(true);
+		const suppression = supprimerPhoto;
 		try {
-			if (supprimerPhoto) {
-				effacerPhotoProfil(utilisateur.id);
-				setPhotoActuelle(null);
-			} else if (apercu) {
-				enregistrerPhotoProfil(utilisateur.id, apercu);
-				setPhotoActuelle(apercu);
-			}
+			const compte = suppression
+				? await authApi.supprimerPhoto()
+				: fichier
+					? await authApi.changerPhoto(fichier)
+					: null;
+			if (compte) mettreAJourUtilisateur({ photoUrl: compte.photoUrl ?? null });
 			setApercu(null);
+			setFichier(null);
 			setSupprimerPhoto(false);
 			setModificationEnCours(false);
-			notifierToast(supprimerPhoto ? 'Photo de profil supprimée.' : 'Photo de profil mise à jour.');
-		} catch {
-			setErreur("La photo n'a pas pu être enregistrée dans ce navigateur. Choisissez une image plus légère.");
+			notifierToast(suppression ? 'Photo de profil supprimée.' : 'Photo de profil mise à jour.');
+		} catch (err: any) {
+			setErreur(err?.message || "La photo n'a pas pu être enregistrée. Réessayez.");
+		} finally {
+			setEnvoi(false);
 		}
 	}
 
@@ -129,10 +136,10 @@ export default function PageProfil() {
 						</div>
 						{modificationEnCours && (
 							<div className="mt-6 flex flex-wrap gap-3 border-t border-slate-200 pt-5">
-								<button type="button" onClick={enregistrerModification} className="min-h-11 rounded-full bg-emerald-700 px-5 py-2 text-sm font-semibold text-white transition hover:bg-emerald-800">
-									Enregistrer la photo
+								<button type="button" onClick={enregistrerModification} disabled={envoi} className="min-h-11 rounded-full bg-emerald-700 px-5 py-2 text-sm font-semibold text-white transition hover:bg-emerald-800 disabled:cursor-wait disabled:opacity-70">
+									{envoi ? 'Enregistrement…' : supprimerPhoto ? 'Confirmer la suppression' : 'Enregistrer la photo'}
 								</button>
-								<button type="button" onClick={annulerModification} className="min-h-11 rounded-full border border-slate-300 px-5 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100">
+								<button type="button" onClick={annulerModification} disabled={envoi} className="min-h-11 rounded-full border border-slate-300 px-5 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100">
 									Annuler
 								</button>
 							</div>
